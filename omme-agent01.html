@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Omme — Asesor de Salud</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a08;
+    --surface: #141410;
+    --surface2: #1c1c18;
+    --border: #2a2a24;
+    --text: #e8e4d8;
+    --text-muted: #7a7870;
+    --text-dim: #4a4840;
+    --accent: #c8973c;
+    --accent-dim: #8a6428;
+    --bubble-user: #1e1e1a;
+    --bubble-agent: #141410;
+    --input-bg: #1a1a16;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Layout */
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 680px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* Header */
+  .header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+    background: var(--bg);
+  }
+
+  .logo-mark {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--accent-dim);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .logo-mark svg {
+    width: 18px;
+    height: 18px;
+    fill: var(--accent);
+  }
+
+  .header-text h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 17px;
+    font-weight: 400;
+    color: var(--text);
+    letter-spacing: 0.01em;
+  }
+
+  .header-text p {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 300;
+    letter-spacing: 0.02em;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    background: #4a9e6a;
+    border-radius: 50%;
+    margin-left: auto;
+    flex-shrink: 0;
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Chat area */
+  .chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    scroll-behavior: smooth;
+  }
+
+  .chat::-webkit-scrollbar { width: 3px; }
+  .chat::-webkit-scrollbar-track { background: transparent; }
+  .chat::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* Messages */
+  .msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 88%;
+    animation: fadeUp 0.25s ease forwards;
+    opacity: 0;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.user { align-self: flex-end; align-items: flex-end; }
+  .msg.agent { align-self: flex-start; align-items: flex-start; }
+
+  .bubble {
+    padding: 13px 17px;
+    border-radius: 2px;
+    font-size: 14.5px;
+    line-height: 1.65;
+    position: relative;
+  }
+
+  .msg.user .bubble {
+    background: var(--bubble-user);
+    border: 1px solid var(--border);
+    border-bottom-right-radius: 0;
+    color: var(--text);
+  }
+
+  .msg.agent .bubble {
+    background: var(--bubble-agent);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 0;
+    color: var(--text);
+  }
+
+  .msg.agent .bubble::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: -1px;
+    bottom: -1px;
+    width: 2px;
+    background: var(--accent-dim);
+    border-radius: 2px 0 0 0;
+  }
+
+  .msg-time {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 5px;
+    font-weight: 300;
+    letter-spacing: 0.02em;
+  }
+
+  /* Typing indicator */
+  .typing {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 14px 18px;
+    background: var(--bubble-agent);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 0;
+    width: fit-content;
+    animation: fadeUp 0.2s ease forwards;
+    opacity: 0;
+    position: relative;
+  }
+
+  .typing::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: -1px;
+    bottom: -1px;
+    width: 2px;
+    background: var(--accent-dim);
+    border-radius: 2px 0 0 0;
+  }
+
+  .typing span {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    animation: bounce 1.2s ease-in-out infinite;
+  }
+
+  .typing span:nth-child(2) { animation-delay: 0.15s; }
+  .typing span:nth-child(3) { animation-delay: 0.3s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-5px); background: var(--accent); }
+  }
+
+  /* Intro */
+  .intro {
+    text-align: center;
+    padding: 40px 20px 20px;
+    animation: fadeUp 0.4s ease forwards;
+    opacity: 0;
+    animation-delay: 0.1s;
+  }
+
+  .intro-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 42px;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+
+  .intro p {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 300;
+    max-width: 280px;
+    margin: 0 auto 28px;
+    line-height: 1.7;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12.5px;
+    padding: 7px 14px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+  }
+
+  .chip:hover {
+    border-color: var(--accent-dim);
+    color: var(--text);
+    background: var(--surface);
+  }
+
+  /* Input area */
+  .input-area {
+    padding: 16px 24px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    flex-shrink: 0;
+  }
+
+  .input-wrap {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 10px 14px;
+    transition: border-color 0.15s;
+  }
+
+  .input-wrap:focus-within {
+    border-color: var(--accent-dim);
+  }
+
+  textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: none;
+    min-height: 22px;
+    max-height: 120px;
+    overflow-y: auto;
+  }
+
+  textarea::placeholder { color: var(--text-dim); }
+
+  textarea::-webkit-scrollbar { width: 2px; }
+  textarea::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .send-btn {
+    width: 32px;
+    height: 32px;
+    background: var(--accent);
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    opacity: 0.9;
+  }
+
+  .send-btn:hover { opacity: 1; transform: scale(1.03); }
+  .send-btn:active { transform: scale(0.97); }
+  .send-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+  .send-btn svg {
+    width: 15px;
+    height: 15px;
+    fill: #0a0a08;
+  }
+
+  .disclaimer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 10px;
+    letter-spacing: 0.01em;
+  }
+
+  /* Error */
+  .error-bubble {
+    background: #1a0e0e;
+    border: 1px solid #3a1a1a;
+    color: #c87a7a;
+    padding: 12px 16px;
+    border-radius: 2px;
+    font-size: 13px;
+    align-self: flex-start;
+    max-width: 88%;
+    animation: fadeUp 0.2s ease forwards;
+    opacity: 0;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" fill="none" stroke="#c8973c" stroke-width="1.5"/>
+        <circle cx="12" cy="12" r="4"/>
+      </svg>
+    </div>
+    <div class="header-text">
+      <h1>Omme</h1>
+      <p>Asesor de salud capilar · Prototipo interno</p>
+    </div>
+    <div class="status-dot"></div>
+  </div>
+
+  <div class="chat" id="chat">
+    <div class="intro" id="intro">
+      <div class="intro-logo">omme</div>
+      <p>Tratamiento médico, seguimiento real, cero tabú.</p>
+      <div class="chips">
+        <button class="chip" onclick="sendChip(this)">Llevo años perdiendo cabello</button>
+        <button class="chip" onclick="sendChip(this)">¿Cuánto cuesta?</button>
+        <button class="chip" onclick="sendChip(this)">Ya probé de todo y nada</button>
+        <button class="chip" onclick="sendChip(this)">¿No tiene efectos secundarios?</button>
+        <button class="chip" onclick="sendChip(this)">¿Por qué confiar en ustedes?</button>
+        <button class="chip" onclick="sendChip(this)">Suena a marketing</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-wrap">
+      <textarea
+        id="input"
+        placeholder="Escribe tu mensaje..."
+        rows="1"
+        onkeydown="handleKey(event)"
+        oninput="autoResize(this)"
+      ></textarea>
+      <button class="send-btn" id="sendBtn" onclick="send()" disabled>
+        <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+      </button>
+    </div>
+    <p class="disclaimer">Prototipo interno · No compartir fuera del equipo</p>
+  </div>
+
+</div>
+
+<script>
+const SYSTEM_PROMPT = `Eres el Agente Advisor de Omme — el primer punto de contacto con hombres que están considerando tratar su pérdida de cabello.
+
+Tu único trabajo en esta conversación es uno: ganar suficiente confianza para que el usuario quiera saber más y esté dispuesto a ser evaluado.
+
+No vendes. No cierras. No presionas. Educas, validas y abres la puerta.
+
+QUIÉN ERES
+
+Eres un asesor inteligente y empático de Omme. No eres un bot. No eres un vendedor. Eres alguien que entiende lo que siente este hombre, conoce la ciencia detrás del problema, y puede explicar con honestidad por qué Omme existe y cómo funciona.
+
+Tu tono es: confiado, claro, cercano, sin presión. Como un amigo que sabe de salud masculina y te habla directo.
+
+Nunca suenas como publicidad. Nunca suenas como un hospital. Nunca suenas como un chatbot.
+
+CONTEXTO DE OMME
+
+Omme es una plataforma digital de salud masculina. No vendemos pastillas — ofrecemos programas de tratamiento de 6 y 12 meses que incluyen evaluación médica, protocolo personalizado, medicamento en casa y seguimiento mensual.
+
+El tratamiento base para pérdida de cabello combina Minoxidil oral 5mg + Dutasterida 0.5mg, administrado solo a pacientes que pasan un screening estricto.
+
+Precio: $799 pesos al mes. Disponible en planes de 6 o 12 meses.
+
+Tagline: Tratamiento médico, seguimiento real, cero tabú.
+
+EL USUARIO CON QUIEN HABLAS
+
+Este hombre probablemente lleva meses o años viendo cómo pierde cabello, ya probó algo antes que no funcionó, desconfía de lo que ve en internet, tiene miedo de efectos secundarios, no ha hablado de esto con nadie, y no sabe si lo que tiene es tratable.
+
+Tu trabajo es que se sienta entendido antes de que se sienta vendido.
+
+CONOCIMIENTO DISPONIBLE
+
+Qué es la AGA: La alopecia androgenética es la causa más común de pérdida de cabello en hombres. Es genética y hormonal — la DHT ataca los folículos en personas con predisposición. No es culpa del usuario, es biología. Es progresiva: folículos miniaturizados pueden recuperarse, folículos muertos no. Por eso actuar temprano importa. Señales de alarma que NO son AGA típica: placas redondas, descamación intensa, costras, caída súbita y difusa.
+
+Por qué fallan los tratamientos anteriores: Los shampoos y tónicos no tienen mecanismo de acción real sobre el folículo. Los suplementos no inhiben la DHT. El minoxidil tópico falla en el mundo real por adherencia — dos aplicaciones diarias por un año es difícil de mantener, más dermatitis en algunos casos. Los trasplantes son para folículos ya perdidos, no para los que se están perdiendo ahora.
+
+Racional del tratamiento: Dutasterida 0.5mg frena la destrucción — inhibe la 5-alfa reductasa y reduce DHT. Minoxidil oral 5mg activa el crecimiento — prolonga la fase anágena del folículo. Juntos atacan el problema por dos vías complementarias. Oral sobre tópico no por potencia absoluta sino por efectividad real a 12 meses: una cápsula al día tiene adherencia real. Omme mitiga el riesgo tratando solo a pacientes aptos con screening estricto.
+
+Expectativas realistas: Semanas 1-8 puede haber shedding — es normal, señal de transición del folículo, no de falla del tratamiento. Mes 3: primeras señales de estabilización. Mes 6: primera evaluación seria. Mes 12: consolidación.
+
+Narrativa de marca: Omme existe porque a los hombres nos enseñaron a aguantarnos. La pérdida de cabello no es solo estética — es identidad, seguridad, cómo te ves en el espejo. El sistema tradicional falla: citas que tardan, consultas incómodas, cero acompañamiento post-compra. Omme hace lo contrario: medicina clara + seguimiento real. No vendemos humo. No prometemos melena en 30 días.
+
+Manejo de objeciones:
+- "Suena a estafa": Hay demasiada basura allá afuera. Por eso Omme funciona al revés: primero te evaluamos, solo si eres candidato te tratamos.
+- "¿Por qué no ir con un dermatólogo?": Trabajamos igual que un dermatólogo, sin la fricción. El problema de la visita tradicional es que sales con la receta y estás solo los siguientes 6 meses.
+- "Me da miedo oral": Buen instinto. Por eso no tratamos a cualquiera. Si hay una sola red flag, paramos y lo ve un médico.
+- "¿Y los efectos secundarios sexuales?": Puede pasar en un porcentaje. Por eso lo hablamos desde el día 1 y lo monitoreamos.
+- "¿Y si no funciona?": Lo razonable es evaluar a los 3-6 meses. Si a los 6 no vemos señales, se revisa clínicamente.
+- "Está caro": No estás comprando pastillas, estás comprando protocolo, seguimiento y tranquilidad.
+- "He probado de todo": La pregunta no es qué probaste, sino qué tan constante fuiste y cuánto tiempo.
+
+REGLAS
+
+Siempre: Español mexicano natural y conversacional. Mensajes cortos — 3-4 líneas máximo como WhatsApp real. Valida antes de educar. Si preguntan el precio, lo dices: $799 pesos al mes, planes de 6 o 12 meses.
+
+Nunca: Diagnosticar. Prometer porcentajes de regrowth. Decir que oral es más potente que tópico. Usar lenguaje de publicidad. Presionar hacia la compra. Ofrecer descuentos.
+
+Escalar si menciona: caída en placas, costras, ardor, historia cardiovascular, depresión activa. Mensaje: "Déjame conectarte con nuestro equipo para darte una atención más personalizada. Alguien te escribe en los próximos minutos." Luego detente.
+
+Cuando hay interés genuino di: "El siguiente paso es una evaluación rápida — solo unas preguntas para ver si el tratamiento es para ti. ¿Empezamos?"
+
+FORMATO: Sin bullets, sin headers, sin markdown. Texto corrido como WhatsApp. Emojis solo si el usuario los usa primero.`;
+
+let history = [];
+let isLoading = false;
+
+const chatEl = document.getElementById('chat');
+const inputEl = document.getElementById('input');
+const sendBtn = document.getElementById('sendBtn');
+const introEl = document.getElementById('intro');
+
+inputEl.addEventListener('input', () => {
+  sendBtn.disabled = !inputEl.value.trim() || isLoading;
+});
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (!sendBtn.disabled) send();
+  }
+}
+
+function getTime() {
+  return new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+}
+
+function appendMsg(role, text) {
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.textContent = text;
+  const time = document.createElement('div');
+  time.className = 'msg-time';
+  time.textContent = getTime();
+  div.appendChild(bubble);
+  div.appendChild(time);
+  chatEl.appendChild(div);
+  chatEl.scrollTop = chatEl.scrollHeight;
+  return div;
+}
+
+function showTyping() {
+  const div = document.createElement('div');
+  div.className = 'typing';
+  div.id = 'typing';
+  div.innerHTML = '<span></span><span></span><span></span>';
+  chatEl.appendChild(div);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+function hideTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+function sendChip(el) {
+  const text = el.textContent;
+  inputEl.value = text;
+  autoResize(inputEl);
+  sendBtn.disabled = false;
+  send();
+}
+
+async function send() {
+  const text = inputEl.value.trim();
+  if (!text || isLoading) return;
+
+  if (introEl) introEl.style.display = 'none';
+
+  inputEl.value = '';
+  inputEl.style.height = 'auto';
+  sendBtn.disabled = true;
+  isLoading = true;
+
+  appendMsg('user', text);
+  history.push({ role: 'user', content: text });
+
+  showTyping();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': CONFIG.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: history
+      })
+    });
+
+    const data = await res.json();
+    hideTyping();
+
+    if (data.error) throw new Error(data.error.message);
+
+    const reply = data.content?.[0]?.text || 'Sin respuesta.';
+    history.push({ role: 'assistant', content: reply });
+    appendMsg('agent', reply);
+
+  } catch (err) {
+    hideTyping();
+    const errDiv = document.createElement('div');
+    errDiv.className = 'error-bubble';
+    errDiv.textContent = 'Error al conectar con el agente. Verifica tu conexión e intenta de nuevo.';
+    chatEl.appendChild(errDiv);
+    chatEl.scrollTop = chatEl.scrollHeight;
+    history.pop();
+  }
+
+  isLoading = false;
+  sendBtn.disabled = !inputEl.value.trim();
+  inputEl.focus();
+}
+</script>
+</body>
+</html>
