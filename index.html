@@ -580,7 +580,7 @@ async function send() {
     hideTyping();
     const errDiv = document.createElement('div');
     errDiv.className = 'error-bubble';
-    errDiv.textContent = 'Error al conectar con el agente. Verifica tu conexión e intenta de nuevo.';
+    errDiv.textContent = 'Error: ' + (err.message || 'Error al conectar con el agente.');
     chatEl.appendChild(errDiv);
     chatEl.scrollTop = chatEl.scrollHeight;
     history.pop();
