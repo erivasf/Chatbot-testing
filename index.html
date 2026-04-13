@@ -416,11 +416,11 @@ html, body {
 
     <div class="panel-section">
       <div class="section-label">Señales de conversación</div>
+      <div class="signal-item" id="competitors-flag" style="display:none; border-left-color: #f97316; margin-bottom: 5px;">
+        Explorando competidores activamente
+      </div>
       <div class="signals-list" id="signals-list">
         <div class="signal-empty">Esperando interacción...</div>
-        <div class="signal-item" id="competitors-flag" style="display:none; border-left-color: #f97316;">
-          Explorando competidores activamente
-        </div>
       </div>
     </div>
 
@@ -532,19 +532,21 @@ function disableInputForHumanTakeover() {
 function updateInsightPanel(data, userMessage) {
   // Agente activo
   if (data.currentAgent) {
-    document.getElementById('panel-agent').textContent = AGENT_NAMES[data.currentAgent] || data.currentAgent;
+    const el = document.getElementById('panel-agent');
+    if (el) el.textContent = AGENT_NAMES[data.currentAgent] || data.currentAgent;
     updateAgentBadge(data.currentAgent);
   }
 
   // Health score
   if (data.healthScore) {
-    document.getElementById('panel-score').textContent = data.healthScore;
+    const el = document.getElementById('panel-score');
+    if (el) el.textContent = data.healthScore;
   }
 
   // Human takeover
   if (data.humanTakeover) {
-    document.getElementById('status-takeover').textContent = 'Activo';
-    document.getElementById('status-takeover').style.color = '#dc2626';
+    const el = document.getElementById('status-takeover');
+    if (el) { el.textContent = 'Activo'; el.style.color = '#dc2626'; }
   }
 
   // Perfil detectado por Claude (viene del backend)
@@ -566,29 +568,34 @@ function updateInsightPanel(data, userMessage) {
       'directo':           'tag-directo'
     };
     const p = data.detectedProfile;
-    document.getElementById('profile-tags').innerHTML =
-      `<div class="tag ${tagClasses[p] || 'tag-empty'}">${tagLabels[p] || p}</div>`;
+    const el = document.getElementById('profile-tags');
+    if (el) el.innerHTML = `<div class="tag ${tagClasses[p] || 'tag-empty'}">${tagLabels[p] || p}</div>`;
   }
 
   // Progreso del intake
   if (data.intakeProgress > 0) {
     const pct = Math.round((data.intakeProgress / 16) * 100);
-    document.getElementById('intake-bar').style.width = pct + '%';
-    document.getElementById('intake-label').textContent = `Pregunta ${data.intakeProgress} de 16`;
+    const bar = document.getElementById('intake-bar');
+    const label = document.getElementById('intake-label');
+    if (bar) bar.style.width = pct + '%';
+    if (label) label.textContent = `Pregunta ${data.intakeProgress} de 16`;
   }
   if (data.intakeCompleted) {
-    document.getElementById('intake-bar').style.width = '100%';
-    document.getElementById('intake-bar').style.background = '#22C55E';
-    document.getElementById('intake-label').textContent = 'Evaluación completa ✓';
+    const bar = document.getElementById('intake-bar');
+    const label = document.getElementById('intake-label');
+    if (bar) { bar.style.width = '100%'; bar.style.background = '#22C55E'; }
+    if (label) label.textContent = 'Evaluación completa ✓';
   }
 
   // Explorando competidores
   if (data.exploringCompetitors) {
-    document.getElementById('competitors-flag').style.display = 'block';
+    const el = document.getElementById('competitors-flag');
+    if (el) el.style.display = 'block';
   }
 
   // Señales de conversación
   const signalsList = document.getElementById('signals-list');
+  if (!signalsList) return;
   const existingEmpty = signalsList.querySelector('.signal-empty');
   if (existingEmpty) existingEmpty.remove();
 
