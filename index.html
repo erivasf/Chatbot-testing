@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><radialGradient id='g' cx='40%25' cy='35%25' r='60%25'><stop offset='0%25' stop-color='%2360A5FA'/><stop offset='50%25' stop-color='%232563EB'/><stop offset='100%25' stop-color='%23818CF8'/></radialGradient></defs><circle cx='16' cy='16' r='15' fill='url(%23g)'/></svg>">
+<link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
 <title>Omme — Salud masculina</title>
 <style>
 @keyframes spin  { 0%   { transform: rotate(0deg);   } 100% { transform: rotate(360deg); } }
@@ -16,17 +16,49 @@
 html, body {
   height: 100%;
   background: #EDECEA;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.app-layout {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  min-height: 100vh;
+  gap: 24px;
+  padding: 24px;
+}
+
+/* Desktop: chat + panel lado a lado */
+@media (min-width: 768px) {
+  .app-layout {
+    align-items: flex-start;
+    padding-top: 40px;
+  }
+}
+
+/* Mobile: solo el chat, sin panel */
+@media (max-width: 767px) {
+  .app-layout {
+    padding: 0;
+    gap: 0;
+  }
+  .chat-container {
+    border-radius: 0 !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+  }
+  .insight-panel {
+    display: none !important;
+  }
 }
 
 .chat-container {
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
   height: 100vh;
-  max-height: 760px;
+  max-height: 720px;
   display: flex;
   flex-direction: column;
   background: #EDECEA;
@@ -34,6 +66,7 @@ html, body {
   overflow: hidden;
   border: 1px solid rgba(0,0,0,0.07);
   box-shadow: 0 16px 56px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.07);
+  flex-shrink: 0;
 }
 
 .chat-header {
@@ -198,52 +231,208 @@ html, body {
 .message-input::placeholder { color: rgba(13,13,13,0.30); }
 .message-input:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.cta-button {
-  background: #0d0d0d; color: #fff;
-  font-size: 11px; font-weight: 600;
-  padding: 9px 14px; border-radius: 22px;
+.send-button {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: #0d0d0d;
   border: none; cursor: pointer;
-  white-space: nowrap; letter-spacing: 0.02em;
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
   transition: opacity 0.15s;
 }
-.cta-button:hover { opacity: 0.85; }
-.cta-button:disabled { opacity: 0.4; cursor: not-allowed; }
+.send-button:hover { opacity: 0.8; }
+.send-button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ─── Insight Panel ─────────────────────────────────────────────────────────── */
+.insight-panel {
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(0,0,0,0.07);
+  border-radius: 20px;
+  overflow: hidden;
+  max-height: 720px;
+  overflow-y: auto;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  background: rgba(255,255,255,0.7);
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(12px);
+}
+.panel-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(13,13,13,0.45);
+}
+.panel-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #22C55E;
+  box-shadow: 0 0 5px rgba(34,197,94,0.6);
+}
+
+.panel-section {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.section-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(13,13,13,0.30);
+  margin-bottom: 8px;
+}
+
+.tag-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.tag {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 3px 9px;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+.tag-ansioso   { background: rgba(251,146,60,0.12); color: #c2410c; border: 1px solid rgba(251,146,60,0.20); }
+.tag-esceptico { background: rgba(239,68,68,0.10);  color: #b91c1c; border: 1px solid rgba(239,68,68,0.18); }
+.tag-directo   { background: rgba(37,99,235,0.10);  color: #1d4ed8; border: 1px solid rgba(37,99,235,0.18); }
+.tag-curioso   { background: rgba(139,92,246,0.10); color: #6d28d9; border: 1px solid rgba(139,92,246,0.18); }
+.tag-urgente   { background: rgba(20,184,166,0.10); color: #0f766e; border: 1px solid rgba(20,184,166,0.18); }
+.tag-precio    { background: rgba(234,179,8,0.10);  color: #a16207; border: 1px solid rgba(234,179,8,0.18); }
+.tag-empty     { background: rgba(0,0,0,0.04); color: rgba(13,13,13,0.30); border: 1px solid rgba(0,0,0,0.07); font-weight: 500; }
+
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.meta-key  { font-size: 11px; color: rgba(13,13,13,0.40); }
+.meta-val  { font-size: 11px; font-weight: 600; color: #0d0d0d; }
+.status-ok { color: #15803d; }
+
+.signals-list { display: flex; flex-direction: column; gap: 5px; }
+.signal-item {
+  font-size: 11px;
+  color: rgba(13,13,13,0.55);
+  padding: 5px 8px;
+  background: rgba(37,99,235,0.05);
+  border-radius: 6px;
+  border-left: 2px solid rgba(37,99,235,0.25);
+  line-height: 1.4;
+}
+.signal-empty { font-size: 11px; color: rgba(13,13,13,0.25); font-style: italic; }
 </style>
 </head>
 <body>
 
-<div class="chat-container">
-  <div class="chat-header">
-    <div class="sphere-btn">
-      <div class="sphere-layer1"></div>
-      <div class="sphere-layer2"></div>
-      <div class="sphere-layer3"></div>
+<div class="app-layout">
+  <div class="chat-container">
+    <div class="chat-header">
+      <div class="sphere-btn">
+        <div class="sphere-layer1"></div>
+        <div class="sphere-layer2"></div>
+        <div class="sphere-layer3"></div>
+      </div>
+      <div class="brand-col">
+        <span class="brand-name">omme</span>
+        <span class="brand-sub">Salud masculina</span>
+      </div>
+      <span class="agent-pill" id="agent-badge">Advisor</span>
+      <div class="live-dot"></div>
     </div>
-    <div class="brand-col">
-      <span class="brand-name">omme</span>
-      <span class="brand-sub">Salud masculina</span>
+
+    <div class="messages-container" id="messages">
+      <div class="timestamp" id="chat-timestamp"></div>
+      <div class="human-takeover-banner" id="human-takeover-banner">
+        Un miembro de nuestro equipo te está atendiendo. Por favor espera.
+      </div>
     </div>
-    <span class="agent-pill" id="agent-badge">Advisor</span>
-    <div class="live-dot"></div>
+
+    <div class="input-bar">
+      <input
+        type="text"
+        class="message-input"
+        id="message-input"
+        placeholder="Escribe un mensaje..."
+        autocomplete="off"
+      />
+      <button class="send-button" id="send-btn" disabled>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M1 7h12M7 1l6 6-6 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
-  <div class="messages-container" id="messages">
-    <div class="timestamp" id="chat-timestamp"></div>
-    <div class="human-takeover-banner" id="human-takeover-banner">
-      Un miembro de nuestro equipo te está atendiendo. Por favor espera.
+  <div class="insight-panel" id="insight-panel">
+    <div class="panel-header">
+      <span class="panel-title">Insights del usuario</span>
+      <div class="panel-dot"></div>
     </div>
-  </div>
 
-  <div class="input-bar">
-    <input
-      type="text"
-      class="message-input"
-      id="message-input"
-      placeholder="O escribe un mensaje..."
-      autocomplete="off"
-    />
-    <button class="cta-button" id="send-btn">Empieza aquí</button>
+    <div class="panel-section">
+      <div class="section-label">Perfil detectado</div>
+      <div class="tag-grid" id="profile-tags">
+        <div class="tag tag-empty">Sin datos aún</div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-label">Agente activo</div>
+      <div class="meta-row">
+        <span class="meta-key">Agente</span>
+        <span class="meta-val" id="panel-agent">Advisor</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-key">Health Score</span>
+        <span class="meta-val" id="panel-score">50</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-key">Canal</span>
+        <span class="meta-val">Web (simulador)</span>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-label">Señales de conversación</div>
+      <div class="signals-list" id="signals-list">
+        <div class="signal-empty">Esperando interacción...</div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-label">Estado del sistema</div>
+      <div class="meta-row">
+        <span class="meta-key">Airtable</span>
+        <span class="meta-val status-ok" id="status-airtable">Conectado</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-key">Claude API</span>
+        <span class="meta-val status-ok" id="status-claude">Activo</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-key">Human takeover</span>
+        <span class="meta-val" id="status-takeover">Inactivo</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -333,6 +522,73 @@ function disableInputForHumanTakeover() {
   bannerEl.style.display = 'block';
 }
 
+// ─── Insight Panel ────────────────────────────────────────────────────────────
+function updateInsightPanel(data, userMessage) {
+  // Agente activo
+  if (data.currentAgent) {
+    document.getElementById('panel-agent').textContent = AGENT_NAMES[data.currentAgent] || data.currentAgent;
+    updateAgentBadge(data.currentAgent);
+  }
+
+  // Health score
+  if (data.healthScore) {
+    document.getElementById('panel-score').textContent = data.healthScore;
+  }
+
+  // Human takeover
+  if (data.human_takeover) {
+    document.getElementById('status-takeover').textContent = 'Activo';
+    document.getElementById('status-takeover').style.color = '#dc2626';
+  }
+
+  // Detección de perfil basada en palabras clave del mensaje
+  const profileTags = document.getElementById('profile-tags');
+  const msg = userMessage.toLowerCase();
+  const profiles = [];
+  if (msg.includes('caro') || msg.includes('precio') || msg.includes('barato') || msg.includes('cuesta')) profiles.push('resistente_precio');
+  if (msg.includes('miedo') || msg.includes('efectos') || msg.includes('preocupa') || msg.includes('riesgo')) profiles.push('ansioso');
+  if (msg.includes('choiz') || msg.includes('competencia') || msg.includes('otro') || msg.includes('compara')) profiles.push('esceptico');
+  if (msg.includes('cómo funciona') || msg.includes('mecanismo') || msg.includes('por qué')) profiles.push('curioso');
+  if (msg.includes('ya') || msg.includes('ahora') || msg.includes('inmediato') || msg.includes('rápido')) profiles.push('urgente');
+
+  if (profiles.length > 0) {
+    const tagLabels = {
+      'resistente_precio': 'Resistente precio',
+      'ansioso':           'Ansioso',
+      'esceptico':         'Escéptico',
+      'curioso':           'Curioso',
+      'urgente':           'Urgente',
+      'directo':           'Directo'
+    };
+    const tagClasses = {
+      'resistente_precio': 'tag-precio',
+      'ansioso':           'tag-ansioso',
+      'esceptico':         'tag-esceptico',
+      'curioso':           'tag-curioso',
+      'urgente':           'tag-urgente',
+      'directo':           'tag-directo'
+    };
+    profileTags.innerHTML = profiles.map(p =>
+      `<div class="tag ${tagClasses[p]}">${tagLabels[p]}</div>`
+    ).join('');
+  }
+
+  // Señales de conversación
+  const signalsList = document.getElementById('signals-list');
+  const existingEmpty = signalsList.querySelector('.signal-empty');
+  if (existingEmpty) existingEmpty.remove();
+
+  const signalDiv = document.createElement('div');
+  signalDiv.className = 'signal-item';
+  const time = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+  signalDiv.textContent = `${time} — ${userMessage.substring(0, 50)}${userMessage.length > 50 ? '...' : ''}`;
+  signalsList.appendChild(signalDiv);
+
+  // Mantener máximo 5 señales
+  const signals = signalsList.querySelectorAll('.signal-item');
+  if (signals.length > 5) signals[0].remove();
+}
+
 // ─── Send ─────────────────────────────────────────────────────────────────────
 async function send() {
   const text = inputEl.value.trim();
@@ -378,6 +634,7 @@ async function send() {
     if (data.human_takeover) {
       const msg = data.message || 'Un miembro de nuestro equipo te está atendiendo. Por favor espera.';
       addMessage(msg, 'agent');
+      updateInsightPanel(data, text);
       disableInputForHumanTakeover();
       isLoading = false;
       return;
@@ -386,6 +643,8 @@ async function send() {
     const reply = data.content?.[0]?.text || 'Sin respuesta.';
     history.push({ role: 'assistant', content: reply });
     addMessage(reply, 'agent');
+
+    updateInsightPanel(data, text);
 
   } catch (err) {
     hideTyping();
