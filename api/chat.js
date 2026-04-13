@@ -17,7 +17,9 @@ const F = {
     detected_profile:      'fldr6M9KfiVAwI0dK',
     exploring_competitors: 'fldae3lxMwex9doU6',
     decision_driver:       'fld1H3h7jO58hgNud',
-    profile_history:       'fldJeZwBmsPfOw4Ls'
+    profile_history:       'fldJeZwBmsPfOw4Ls',
+    intake_completed:      'fldNLb3R3YB0gkvkC',
+    crossover_ed:          'fldDOUriQwGsquYOJ'
   },
   agentPrompts: {
     agent_id:      'fldP6vlaSBUt07HZX',
@@ -55,7 +57,11 @@ Además de responder al usuario, al final de CADA mensaje debes incluir un bloqu
   "razon_handoff": "descripción breve si handoff no es null, null si no",
   "exploring_competitors": true|false,
   "decision_driver": "texto libre si el usuario lo expresó, null si no",
-  "profile_evolution": true|false
+  "profile_evolution": true|false,
+  "intake_progress": 0,
+  "intake_completed": false,
+  "crossover_ed": false,
+  "fotos_solicitadas": false
 }
 </omme_meta>
 
@@ -90,7 +96,13 @@ Reglas para decision_driver:
 
 Reglas para profile_evolution:
 - true: si el perfil que detectas ahora es diferente al del mensaje anterior (el usuario está cambiando de postura)
-- false: si es consistente con lo anterior`;
+- false: si es consistente con lo anterior
+
+Reglas para campos de intake (aplican cuando eres agent_02):
+- intake_progress: número de preguntas del cuestionario que ya han sido respondidas (0-16). Incrementa en 1 por cada pregunta completada en este turno.
+- intake_completed: true cuando las 16 preguntas del cuestionario han sido respondidas
+- crossover_ed: true si el usuario muestra interés en tratamiento para disfunción eréctil durante la conversación
+- fotos_solicitadas: true en el turno exacto en que le pides al usuario que envíe las 6 fotos de su cabello. Solo true una vez.`;
 
 // ─── Helpers de Airtable ──────────────────────────────────────────────────────
 function airtableHeaders(apiKey) {
@@ -153,7 +165,8 @@ function parseClaudeResponse(rawResponse) {
   let meta = {
     perfil: null, senal_alerta: false, razon_escalamiento: null,
     handoff: null, razon_handoff: null,
-    exploring_competitors: false, decision_driver: null, profile_evolution: false
+    exploring_competitors: false, decision_driver: null, profile_evolution: false,
+    intake_progress: 0, intake_completed: false, crossover_ed: false, fotos_solicitadas: false
   };
 
   if (metaMatch) {
@@ -337,6 +350,16 @@ export default async function handler(req, res) {
         updates[F.users.decision_driver] = meta.decision_driver;
       }
 
+      // Intake completed
+      if (meta.intake_progress > 0) {
+        updates[F.users.intake_completed] = meta.intake_completed === true;
+      }
+
+      // Crossover ED
+      if (meta.crossover_ed === true) {
+        updates[F.users.crossover_ed] = 'Sí';
+      }
+
       // Señal de alerta → escalamiento
       if (meta.senal_alerta === true) {
         updates[F.users.escalation_flag]       = true;
@@ -368,7 +391,10 @@ export default async function handler(req, res) {
       escalationReason:     meta.razon_escalamiento || null,
       exploringCompetitors: meta.exploring_competitors === true,
       decisionDriver:       meta.decision_driver || null,
-      profileEvolution:     meta.profile_evolution === true
+      profileEvolution:     meta.profile_evolution === true,
+      intakeProgress:       meta.intake_progress || 0,
+      intakeCompleted:      meta.intake_completed === true,
+      fotosSolicitadas:     meta.fotos_solicitadas === true
     });
 
   } catch (err) {

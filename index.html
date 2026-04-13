@@ -407,6 +407,14 @@ html, body {
     </div>
 
     <div class="panel-section">
+      <div class="section-label">Progreso del intake</div>
+      <div style="background: rgba(37,99,235,0.08); border-radius: 6px; height: 4px; overflow: hidden; margin-bottom: 6px;">
+        <div id="intake-bar" style="height: 100%; background: #185FA5; width: 0%; transition: width 0.3s; border-radius: 6px;"></div>
+      </div>
+      <div id="intake-label" style="font-size: 10px; color: rgba(13,13,13,0.35);">Sin iniciar</div>
+    </div>
+
+    <div class="panel-section">
       <div class="section-label">Señales de conversación</div>
       <div class="signals-list" id="signals-list">
         <div class="signal-empty">Esperando interacción...</div>
@@ -562,6 +570,18 @@ function updateInsightPanel(data, userMessage) {
       `<div class="tag ${tagClasses[p] || 'tag-empty'}">${tagLabels[p] || p}</div>`;
   }
 
+  // Progreso del intake
+  if (data.intakeProgress > 0) {
+    const pct = Math.round((data.intakeProgress / 16) * 100);
+    document.getElementById('intake-bar').style.width = pct + '%';
+    document.getElementById('intake-label').textContent = `Pregunta ${data.intakeProgress} de 16`;
+  }
+  if (data.intakeCompleted) {
+    document.getElementById('intake-bar').style.width = '100%';
+    document.getElementById('intake-bar').style.background = '#22C55E';
+    document.getElementById('intake-label').textContent = 'Evaluación completa ✓';
+  }
+
   // Explorando competidores
   if (data.exploringCompetitors) {
     document.getElementById('competitors-flag').style.display = 'block';
@@ -583,29 +603,49 @@ function updateInsightPanel(data, userMessage) {
   if (signals.length > 5) signals[0].remove();
 }
 
-// ─── Send ─────────────────────────────────────────────────────────────────────
-async function send() {
-  const text = inputEl.value.trim();
-  if (!text || isLoading || humanTakeoverActive) return;
+// ─── Photo simulation ─────────────────────────────────────────────────────────
+function showPhotoSimulationButton() {
+  if (document.getElementById('photo-sim-btn')) return;
 
-  inputEl.value = '';
+  const btn = document.createElement('div');
+  btn.id = 'photo-sim-btn';
+  btn.style.cssText = 'align-self: flex-start; margin: 4px 0; display: flex; flex-direction: column; gap: 8px; max-width: 82%;';
+  btn.innerHTML = `
+    <div style="background: linear-gradient(135deg, #EFF6FF, #DBEAFE); border-radius: 14px; border-top-left-radius: 3px; padding: 12px 14px; font-size: 12.5px; color: #1e3a5f; line-height: 1.5; box-shadow: 0 1px 6px rgba(37,99,235,0.08);">
+      📎 6 fotos requeridas para completar tu evaluación
+    </div>
+    <button onclick="simulatePhotoUpload()" style="background: #0d0d0d; color: white; border: none; border-radius: 10px; padding: 10px 16px; font-size: 12px; font-weight: 600; cursor: pointer; letter-spacing: 0.02em; text-align: left; transition: opacity 0.15s;">
+      Simulación de envío de fotos →
+    </button>`;
+  messagesEl.appendChild(btn);
+  scrollToBottom();
+}
+
+function simulatePhotoUpload() {
+  const btn = document.getElementById('photo-sim-btn');
+  if (btn) btn.remove();
+
+  const photoText = 'He enviado las 6 fotos de mi cabello';
+  addMessage(photoText, 'user');
+  history.push({ role: 'user', content: photoText });
+
   sendBtn.disabled = true;
   isLoading = true;
+  setTimeout(async () => {
+    await dispatchToAPI(photoText);
+    isLoading = false;
+    sendBtn.disabled = !inputEl.value.trim() || humanTakeoverActive;
+  }, 500);
+}
 
-  addMessage(text, 'user');
-  history.push({ role: 'user', content: text });
-
+// ─── API dispatch (shared by send() and simulatePhotoUpload()) ────────────────
+async function dispatchToAPI(text) {
   showTyping();
-
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages:            history,
-        userId:              userId,
-        conversationHistory: history
-      })
+      body: JSON.stringify({ messages: history, userId, conversationHistory: history })
     });
 
     const data = await res.json();
@@ -620,9 +660,7 @@ async function send() {
     }
 
     // Actualizar badge del agente
-    if (data.currentAgent) {
-      updateAgentBadge(data.currentAgent);
-    }
+    if (data.currentAgent) updateAgentBadge(data.currentAgent);
 
     // Human takeover
     if (data.humanTakeover) {
@@ -630,13 +668,15 @@ async function send() {
       addMessage(msg, 'agent');
       updateInsightPanel(data, text);
       disableInputForHumanTakeover();
-      isLoading = false;
       return;
     }
 
     const reply = data.content?.[0]?.text || 'Sin respuesta.';
     history.push({ role: 'assistant', content: reply });
     addMessage(reply, 'agent');
+
+    // Botón de fotos si agent_02 lo solicitó
+    if (data.fotosSolicitadas) showPhotoSimulationButton();
 
     updateInsightPanel(data, text);
 
@@ -645,6 +685,21 @@ async function send() {
     showError('Error: ' + (err.message || 'No se pudo conectar con el agente.'));
     history.pop();
   }
+}
+
+// ─── Send ─────────────────────────────────────────────────────────────────────
+async function send() {
+  const text = inputEl.value.trim();
+  if (!text || isLoading || humanTakeoverActive) return;
+
+  inputEl.value = '';
+  sendBtn.disabled = true;
+  isLoading = true;
+
+  addMessage(text, 'user');
+  history.push({ role: 'user', content: text });
+
+  await dispatchToAPI(text);
 
   isLoading = false;
   sendBtn.disabled = !inputEl.value.trim() || humanTakeoverActive;
