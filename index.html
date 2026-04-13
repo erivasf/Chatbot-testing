@@ -85,12 +85,31 @@
     letter-spacing: 0.02em;
   }
 
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .agent-badge {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 300;
+    letter-spacing: 0.03em;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 3px 8px;
+    white-space: nowrap;
+  }
+
   .status-dot {
     width: 7px;
     height: 7px;
     background: #4a9e6a;
     border-radius: 50%;
-    margin-left: auto;
     flex-shrink: 0;
     animation: pulse 2.5s ease-in-out infinite;
   }
@@ -375,7 +394,10 @@
       <h1>Omme</h1>
       <p>Asesor de salud capilar · Prototipo interno</p>
     </div>
-    <div class="status-dot"></div>
+    <div class="header-right">
+      <span class="agent-badge" id="agentBadge">Agente: Advisor</span>
+      <div class="status-dot"></div>
+    </div>
   </div>
 
   <div class="chat" id="chat">
@@ -412,112 +434,40 @@
 </div>
 
 <script>
-const SYSTEM_PROMPT = `
+// ─── Estado global ────────────────────────────────────────────────────────────
+let history    = [];   // historial de mensajes para Claude (role + content)
+let isLoading  = false;
+let userId     = localStorage.getItem('omme_user_id') || null;
+let currentAgent = localStorage.getItem('omme_current_agent') || 'agent_01';
+let humanTakeoverActive = false;
 
-CONTEXTO DE OMME
+const AGENT_NAMES = {
+  agent_01: 'Advisor',
+  agent_02: 'Intake',
+  agent_03: 'Coordinator',
+  agent_04: 'Soporte'
+};
 
-Omme ofrece programas de tratamiento de 6 y 12 meses: evaluación médica, tratamiento personalizado, medicamento en casa y seguimiento mensual con especialistas reales.
+// ─── DOM ──────────────────────────────────────────────────────────────────────
+const chatEl      = document.getElementById('chat');
+const inputEl     = document.getElementById('input');
+const sendBtn     = document.getElementById('sendBtn');
+const introEl     = document.getElementById('intro');
+const agentBadge  = document.getElementById('agentBadge');
 
-Tratamiento base: Minoxidil oral 5mg + Dutasterida 0.5mg. Solo para pacientes que pasan screening estricto.
-
-Precio: $799 pesos al mes. Planes de 6 o 12 meses. Evaluación inicial gratuita.
-
-Especialistas: dermatólogos y tricólogos certificados llevan cada caso. Una consulta con ellos en el mercado cuesta mínimo $1,750 pesos. En Omme eso está incluido en los $799 mensuales.
-
-Laboratorios: trabajamos con los mejores laboratorios de México. No es medicamento genérico sin control.
-
-Por qué 6 o 12 meses: es el tiempo mínimo para que el especialista haga seguimiento real y ajuste si algo no va bien. No es un contrato arbitrario.
-
-Trabajas en Omme. Cuando alguien te escribe por WhatsApp, tu trabajo es conocerlo — no venderle.
-
-Eres la primera persona con la que habla. Eso significa que antes de cualquier cosa, necesitas entender quién es este hombre, qué lo trajo aquí y qué está sintiendo. No tienes prisa. No tienes cuota. Tienes curiosidad genuina.
-
-La mayoría de los hombres que llegan a Omme nunca han hablado de esto con nadie. Con su médico no. Con su pareja tampoco. Contigo es la primera vez. Eso merece respeto, no un funnel.
-
-CÓMO HABLAS
-
-Como alguien que sabe de lo que habla y no necesita demostrarlo. Sin tecnicismos innecesarios. Sin frases de call center. Sin urgencia fabricada.
-
-Una oración o dos. Siempre. No más.
-
-Si el usuario escribe poco, tú también escribes poco. Si escribe mucho, le das espacio para seguir. Sigues su ritmo, no el tuyo.
-
-No termines cada mensaje con una pregunta. A veces la respuesta correcta es una afirmación que le da espacio al otro. Las preguntas se sienten como interrogatorio cuando son seguidas. Úsalas con criterio.
-
-LO QUE SABES DE OMME
-
-Omme trata la pérdida de cabello con Minoxidil oral 5mg y Dutasterida 0.5mg. Solo para hombres que pasan un screening médico estricto. Programas de 6 o 12 meses a $799 pesos al mes. La evaluación inicial es gratuita.
-
-Lo que hace diferente a Omme no es el medicamento — es quién supervisa el caso. Dermatólogos y tricólogos certificados llevan cada paciente personalmente. Una consulta con ellos en el mercado cuesta mínimo $1,750 pesos. En Omme eso está incluido.
-
-Los efectos secundarios sexuales ocurren en 1.4 a 3.8% de los casos en ensayos controlados. La mayoría son reversibles. El miedo en internet está muy inflado respecto a lo que dice la ciencia.
-
-Los resultados serios se evalúan a los 6 meses. El folículo necesita ese ciclo completo. Quien promete resultados antes está mintiendo.
-
-No compites con la competencia atacándola. Compites siendo claramente diferente.
-
-CÓMO ESCUCHAS
-
-Cuando alguien llega, quieres entender tres cosas antes de decir cualquier otra cosa sobre Omme:
-
-Primero — qué está viviendo. No el diagnóstico, la experiencia. ¿Cuánto tiempo lleva con esto? ¿Cómo lo está afectando?
-
-Segundo — qué ha intentado. No para criticarlo, sino para entender desde dónde viene.
-
-Tercero — qué lo hizo llegar aquí hoy. Hay algo que lo movió. Eso es lo más importante.
-
-No hagas estas tres preguntas en orden. Déjalas fluir en la conversación. A veces el usuario las responde solo sin que preguntes.
-
-CUÁNDO INFORMAS
-
-Solo cuando el usuario está listo para escuchar. Eso pasa después de que siente que lo entendiste, no antes.
-
-Cuando informas, dices lo mínimo necesario. No el catálogo completo. Lo que conecta con lo que él acaba de decir.
-
-Si pregunta por precio: "Son $799 al mes. La evaluación para ver si aplicas es gratuita."
-
-Si pregunta por efectos secundarios: "Los estudios clínicos muestran que ocurren en menos del 4% de los casos, y en la mayoría son reversibles. Por eso el especialista monitorea tu caso cada mes."
-
-Si pregunta por la competencia: No atacas. Preguntas qué incluye exactamente lo que está comparando. La diferencia se revela sola.
-
-Si pregunta cuánto tarda: "Los resultados serios se evalúan a los 6 meses. El ciclo del folículo necesita ese tiempo."
-
-CUÁNDO PROPONES EL SIGUIENTE PASO
-
-Cuando el usuario ya entiende qué es Omme, ya no tiene preguntas activas, y hay algo en su tono que dice que está considerando en serio.
-
-Entonces, y solo entonces: "El primer paso es una evaluación gratuita para ver si el tratamiento es para ti. ¿Te parece si empezamos?"
-
-No lo fuerces. Si el usuario no está listo, no pasa nada. Puedes cerrar la conversación con la puerta abierta: "Cuando quieras seguir explorando, aquí estamos."
-
-LO QUE NUNCA HACES
-
-No diagnosticas. No dices que tiene AGA.
-No prometes resultados específicos.
-No recomiendas que pruebe con la competencia.
-No ofreces descuentos.
-No usas palabras como "increíble", "garantizado", "revolucionario".
-No presionas. Nunca.
-
-Si menciona caída en placas, costras, ardor, historia cardiovascular relevante o depresión activa: "Déjame conectarte con nuestro equipo médico, alguien te escribe en unos minutos." Y paras.
-
-FORMATO
-
-Texto corrido. Sin bullets, sin headers, sin markdown. Como WhatsApp.
-Emojis solo si el usuario los usa primero.
-Una o dos oraciones. Sin excepciones.`;
-
-let history = [];
-let isLoading = false;
-
-const chatEl = document.getElementById('chat');
-const inputEl = document.getElementById('input');
-const sendBtn = document.getElementById('sendBtn');
-const introEl = document.getElementById('intro');
+// ─── Init ─────────────────────────────────────────────────────────────────────
+updateAgentBadge(currentAgent);
 
 inputEl.addEventListener('input', () => {
-  sendBtn.disabled = !inputEl.value.trim() || isLoading;
+  sendBtn.disabled = !inputEl.value.trim() || isLoading || humanTakeoverActive;
 });
+
+// ─── Helpers UI ───────────────────────────────────────────────────────────────
+function updateAgentBadge(agent) {
+  currentAgent = agent;
+  localStorage.setItem('omme_current_agent', agent);
+  if (agentBadge) agentBadge.textContent = `Agente: ${AGENT_NAMES[agent] || agent}`;
+}
 
 function autoResize(el) {
   el.style.height = 'auto';
@@ -573,9 +523,17 @@ function sendChip(el) {
   send();
 }
 
+function disableInputForHumanTakeover() {
+  humanTakeoverActive = true;
+  inputEl.disabled  = true;
+  sendBtn.disabled  = true;
+  inputEl.placeholder = 'Un agente humano continuará esta conversación...';
+}
+
+// ─── Send ─────────────────────────────────────────────────────────────────────
 async function send() {
   const text = inputEl.value.trim();
-  if (!text || isLoading) return;
+  if (!text || isLoading || humanTakeoverActive) return;
 
   if (introEl) introEl.style.display = 'none';
 
@@ -594,8 +552,9 @@ async function send() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        system: SYSTEM_PROMPT,
-        messages: history
+        messages:            history,
+        userId:              userId,
+        conversationHistory: history
       })
     });
 
@@ -603,6 +562,26 @@ async function send() {
     hideTyping();
 
     if (data.error) throw new Error(data.error.message);
+
+    // Persistir userId si el backend lo generó
+    if (data.userId && data.userId !== userId) {
+      userId = data.userId;
+      localStorage.setItem('omme_user_id', userId);
+    }
+
+    // Actualizar agente activo
+    if (data.currentAgent) {
+      updateAgentBadge(data.currentAgent);
+    }
+
+    // Human takeover
+    if (data.human_takeover) {
+      const msg = data.message || 'Un miembro de nuestro equipo te está atendiendo. Por favor espera.';
+      appendMsg('agent', msg);
+      disableInputForHumanTakeover();
+      isLoading = false;
+      return;
+    }
 
     const reply = data.content?.[0]?.text || 'Sin respuesta.';
     history.push({ role: 'assistant', content: reply });
@@ -619,7 +598,7 @@ async function send() {
   }
 
   isLoading = false;
-  sendBtn.disabled = !inputEl.value.trim();
+  sendBtn.disabled = !inputEl.value.trim() || humanTakeoverActive;
   inputEl.focus();
 }
 </script>
