@@ -410,6 +410,9 @@ html, body {
       <div class="section-label">Señales de conversación</div>
       <div class="signals-list" id="signals-list">
         <div class="signal-empty">Esperando interacción...</div>
+        <div class="signal-item" id="competitors-flag" style="display:none; border-left-color: #f97316;">
+          Explorando competidores activamente
+        </div>
       </div>
     </div>
 
@@ -557,6 +560,11 @@ function updateInsightPanel(data, userMessage) {
     const p = data.detectedProfile;
     document.getElementById('profile-tags').innerHTML =
       `<div class="tag ${tagClasses[p] || 'tag-empty'}">${tagLabels[p] || p}</div>`;
+  }
+
+  // Explorando competidores
+  if (data.exploringCompetitors) {
+    document.getElementById('competitors-flag').style.display = 'block';
   }
 
   // Señales de conversación

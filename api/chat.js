@@ -14,7 +14,10 @@ const F = {
     human_takeover_active: 'fldD7QvN3K6CHxLbE',
     escalation_flag:       'fldmCNPxQmln2Uew7',
     health_score:          'fldFdlCvO5q4aGFW1',
-    detected_profile:      'fldr6M9KfiVAwI0dK'
+    detected_profile:      'fldr6M9KfiVAwI0dK',
+    exploring_competitors: 'fldae3lxMwex9doU6',
+    decision_driver:       'fld1H3h7jO58hgNud',
+    profile_history:       'fldJeZwBmsPfOw4Ls'
   },
   agentPrompts: {
     agent_id:      'fldP6vlaSBUt07HZX',
@@ -49,7 +52,10 @@ Además de responder al usuario, al final de CADA mensaje debes incluir un bloqu
   "senal_alerta": true|false,
   "razon_escalamiento": "descripción breve si senal_alerta es true, null si no",
   "handoff": "agent_02|agent_03|null",
-  "razon_handoff": "descripción breve si handoff no es null, null si no"
+  "razon_handoff": "descripción breve si handoff no es null, null si no",
+  "exploring_competitors": true|false,
+  "decision_driver": "texto libre si el usuario lo expresó, null si no",
+  "profile_evolution": true|false
 }
 </omme_meta>
 
@@ -61,6 +67,7 @@ Reglas para el perfil:
 - urgente: quiere empezar ya, no tiene paciencia para el proceso
 - resistente_precio: menciona que está caro, lo compara con opciones más baratas, o pregunta si hay descuentos
 - null: si el mensaje es muy corto o no hay señal clara (ej. "hola", "ok", "gracias")
+IMPORTANTE sobre el perfil: no te quedes con lo primero que detectes. Cada mensaje es una nueva oportunidad de ajustar. Un usuario que llegó escéptico puede volverse curioso o directo. Actualiza el perfil si la conversación lo indica.
 
 Reglas para señal de alerta — senal_alerta: true SOLO si el usuario menciona explícitamente:
 - Ardor, dolor, costras, pústulas o sangrado en el cuero cabelludo
@@ -70,7 +77,20 @@ Reglas para señal de alerta — senal_alerta: true SOLO si el usuario menciona 
 
 Reglas para handoff:
 - agent_02: cuando el usuario confirma querer empezar la evaluación y en tu respuesta dices "¿empezamos?" o "evaluación gratuita"
-- null: en cualquier otro caso`;
+- null: en cualquier otro caso
+
+Reglas para exploring_competitors:
+- true: si el usuario menciona explícitamente Choiz, otra plataforma, la farmacia, o dice que está comparando opciones
+- false: en cualquier otro caso
+
+Reglas para decision_driver:
+- Si en esta conversación el usuario respondió a la pregunta "¿qué es lo más importante para ti antes de decidir?", captura su respuesta aquí en texto libre
+- null si no la hizo o no respondió todavía
+- IMPORTANTE: cuando el usuario haya hecho al menos 4-5 intercambios, muestre interés genuino pero todavía no haya decidido, pregunta de forma natural: "Antes de contarte más, ¿qué es lo más importante para ti a la hora de elegir un tratamiento?" Solo pregunta una vez. Si ya lo preguntaste, no lo repitas.
+
+Reglas para profile_evolution:
+- true: si el perfil que detectas ahora es diferente al del mensaje anterior (el usuario está cambiando de postura)
+- false: si es consistente con lo anterior`;
 
 // ─── Helpers de Airtable ──────────────────────────────────────────────────────
 function airtableHeaders(apiKey) {
@@ -130,7 +150,11 @@ function generateConversationId() {
 // ─── Parser de metadatos ──────────────────────────────────────────────────────
 function parseClaudeResponse(rawResponse) {
   const metaMatch = rawResponse.match(/<omme_meta>([\s\S]*?)<\/omme_meta>/);
-  let meta = { perfil: null, senal_alerta: false, razon_escalamiento: null, handoff: null, razon_handoff: null };
+  let meta = {
+    perfil: null, senal_alerta: false, razon_escalamiento: null,
+    handoff: null, razon_handoff: null,
+    exploring_competitors: false, decision_driver: null, profile_evolution: false
+  };
 
   if (metaMatch) {
     try {
@@ -287,9 +311,30 @@ export default async function handler(req, res) {
     if (airtableOk && userRecord) {
       const updates = {};
 
-      // Perfil detectado
+      // Perfil actual
       if (meta.perfil && meta.perfil !== 'null') {
         updates[F.users.detected_profile] = meta.perfil;
+      }
+
+      // Historial de perfil (acumular, no reemplazar)
+      if (meta.profile_evolution && meta.perfil && meta.perfil !== 'null') {
+        const currentHistory = userRecord.fields[F.users.profile_history] || '';
+        const lastProfile = currentHistory.split(',').pop().trim();
+        if (lastProfile !== meta.perfil) {
+          updates[F.users.profile_history] = currentHistory
+            ? `${currentHistory}, ${meta.perfil}`
+            : meta.perfil;
+        }
+      }
+
+      // Explorando competidores
+      if (meta.exploring_competitors === true) {
+        updates[F.users.exploring_competitors] = true;
+      }
+
+      // Decision driver (solo si Claude lo capturó)
+      if (meta.decision_driver && meta.decision_driver !== 'null') {
+        updates[F.users.decision_driver] = meta.decision_driver;
       }
 
       // Señal de alerta → escalamiento
@@ -318,9 +363,12 @@ export default async function handler(req, res) {
       content: [{ type: 'text', text: cleanResponse }],
       userId,
       currentAgent,
-      humanTakeover:     meta.senal_alerta === true,
-      detectedProfile:   meta.perfil || null,
-      escalationReason:  meta.razon_escalamiento || null
+      humanTakeover:        meta.senal_alerta === true,
+      detectedProfile:      meta.perfil || null,
+      escalationReason:     meta.razon_escalamiento || null,
+      exploringCompetitors: meta.exploring_competitors === true,
+      decisionDriver:       meta.decision_driver || null,
+      profileEvolution:     meta.profile_evolution === true
     });
 
   } catch (err) {
