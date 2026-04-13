@@ -13,7 +13,8 @@ const F = {
     current_agent:         'fldQdE1Ww6U3mF2bo',
     human_takeover_active: 'fldD7QvN3K6CHxLbE',
     escalation_flag:       'fldmCNPxQmln2Uew7',
-    health_score:          'fldFdlCvO5q4aGFW1'
+    health_score:          'fldFdlCvO5q4aGFW1',
+    detected_profile:      'fldr6M9KfiVAwI0dK'
   },
   agentPrompts: {
     agent_id:      'fldP6vlaSBUt07HZX',
@@ -30,20 +31,46 @@ const F = {
   }
 };
 
-// Señales de alerta en el mensaje del usuario (disparan escalamiento ANTES de llamar a Claude)
-const USER_ALERT_KEYWORDS = [
-  'ardor', 'costras', 'pústulas', 'sangrado en el cuero cabelludo',
-  'ataque al corazón', 'problema cardíaco', 'insuficiencia'
-];
-
-// Frase de alerta en la respuesta del agente (dispara escalamiento DESPUÉS de llamar a Claude)
-const AGENT_ALERT_PHRASE = 'déjame conectarte con nuestro equipo médico';
-
-// Señales de handoff agent_01 → agent_02
-const HANDOFF_01_TRIGGERS = ['evaluación gratuita', '¿empezamos?', '¿empezamos'];
-
 // System prompt de fallback si Airtable no está disponible
 const FALLBACK_SYSTEM_PROMPT = `Eres Omme, un asesor de salud capilar inteligente y empático. Ayuda a los usuarios con información honesta sobre pérdida de cabello y el programa de tratamiento de Omme ($799/mes, planes 6 o 12 meses). Sé claro, cercano y sin presión.`;
+
+// Instrucciones de metadatos que se añaden al final de cada system prompt
+const METADATA_INSTRUCTIONS = `
+
+---
+
+INSTRUCCIONES DE SISTEMA — NO MOSTRAR AL USUARIO
+
+Además de responder al usuario, al final de CADA mensaje debes incluir un bloque JSON con este formato exacto, sin modificaciones:
+
+<omme_meta>
+{
+  "perfil": "ansioso|esceptico|directo|curioso|urgente|resistente_precio|null",
+  "senal_alerta": true|false,
+  "razon_escalamiento": "descripción breve si senal_alerta es true, null si no",
+  "handoff": "agent_02|agent_03|null",
+  "razon_handoff": "descripción breve si handoff no es null, null si no"
+}
+</omme_meta>
+
+Reglas para el perfil:
+- ansioso: expresa miedo, preocupación, o ansiedad sobre efectos secundarios, riesgos o el tratamiento
+- esceptico: menciona competidores, desconfía, o quiere comparar antes de decidir
+- directo: va directo al precio o proceso sin hacer preguntas emocionales
+- curioso: pregunta sobre el mecanismo, la ciencia, o cómo funciona
+- urgente: quiere empezar ya, no tiene paciencia para el proceso
+- resistente_precio: menciona que está caro, lo compara con opciones más baratas, o pregunta si hay descuentos
+- null: si el mensaje es muy corto o no hay señal clara (ej. "hola", "ok", "gracias")
+
+Reglas para señal de alerta — senal_alerta: true SOLO si el usuario menciona explícitamente:
+- Ardor, dolor, costras, pústulas o sangrado en el cuero cabelludo
+- Condición cardiovascular, hepática o renal relevante
+- Depresión activa o pensamientos de hacerse daño
+- Alergia severa a medicamentos
+
+Reglas para handoff:
+- agent_02: cuando el usuario confirma querer empezar la evaluación y en tu respuesta dices "¿empezamos?" o "evaluación gratuita"
+- null: en cualquier otro caso`;
 
 // ─── Helpers de Airtable ──────────────────────────────────────────────────────
 function airtableHeaders(apiKey) {
@@ -100,6 +127,23 @@ function generateConversationId() {
   return `conv_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 }
 
+// ─── Parser de metadatos ──────────────────────────────────────────────────────
+function parseClaudeResponse(rawResponse) {
+  const metaMatch = rawResponse.match(/<omme_meta>([\s\S]*?)<\/omme_meta>/);
+  let meta = { perfil: null, senal_alerta: false, razon_escalamiento: null, handoff: null, razon_handoff: null };
+
+  if (metaMatch) {
+    try {
+      meta = JSON.parse(metaMatch[1].trim());
+    } catch (e) {
+      console.error('[parseClaudeResponse] Error parsing omme_meta:', e);
+    }
+  }
+
+  const cleanResponse = rawResponse.replace(/<omme_meta>[\s\S]*?<\/omme_meta>/g, '').trim();
+  return { cleanResponse, meta };
+}
+
 // ─── Handler principal ────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -110,7 +154,7 @@ export default async function handler(req, res) {
   const AIRTABLE_API_KEY  = process.env.AIRTABLE_API_KEY;
 
   try {
-    const { messages, userId: incomingUserId, conversationHistory } = req.body || {};
+    const { messages, userId: incomingUserId } = req.body || {};
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: { message: 'messages array is required' } });
@@ -135,10 +179,10 @@ export default async function handler(req, res) {
             `{${F.users.user_id}}='${userId}'`
           );
           if (result.records?.length > 0) {
-            userRecord    = result.records[0];
-            currentAgent  = userRecord.fields[F.users.current_agent] || 'agent_01';
+            userRecord   = result.records[0];
+            currentAgent = userRecord.fields[F.users.current_agent] || 'agent_01';
           } else {
-            isNewUser = true; // userId en localStorage pero no en Airtable
+            isNewUser = true;
           }
         }
 
@@ -161,42 +205,14 @@ export default async function handler(req, res) {
     // ── 3. human_takeover_active → respuesta inmediata ────────────────────────
     if (airtableOk && userRecord?.fields?.[F.users.human_takeover_active]) {
       return res.status(200).json({
-        human_takeover: true,
+        humanTakeover: true,
         message: 'Un miembro de nuestro equipo te está atendiendo. Por favor espera.',
         userId,
         currentAgent
       });
     }
 
-    // ── 4. Señales de alerta en el mensaje del usuario ────────────────────────
-    const lastUserMessage = typeof messages[messages.length - 1]?.content === 'string'
-      ? messages[messages.length - 1].content
-      : '';
-
-    const userHasAlert = USER_ALERT_KEYWORDS.some(kw =>
-      lastUserMessage.toLowerCase().includes(kw.toLowerCase())
-    );
-
-    if (userHasAlert) {
-      if (airtableOk && userRecord) {
-        try {
-          await atPatch(AIRTABLE_API_KEY, TABLES.users, userRecord.id, {
-            [F.users.escalation_flag]:       true,
-            [F.users.human_takeover_active]: true
-          });
-        } catch (err) {
-          console.error('[Airtable] escalation update failed:', err.message);
-        }
-      }
-      return res.status(200).json({
-        human_takeover: true,
-        message: 'Por la información que compartes, es importante que te atienda directamente nuestro equipo médico. Alguien te contactará en los próximos minutos.',
-        userId,
-        currentAgent
-      });
-    }
-
-    // ── 5. Obtener system prompt del agente desde Airtable ────────────────────
+    // ── 4. Obtener system prompt del agente desde Airtable ────────────────────
     let systemPrompt = FALLBACK_SYSTEM_PROMPT;
 
     if (airtableOk) {
@@ -217,7 +233,10 @@ export default async function handler(req, res) {
       }
     }
 
-    // ── 6. Llamar a Claude ────────────────────────────────────────────────────
+    // Añadir instrucciones de metadatos al system prompt
+    const fullSystemPrompt = systemPrompt + METADATA_INSTRUCTIONS;
+
+    // ── 5. Llamar a Claude ────────────────────────────────────────────────────
     const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -227,8 +246,8 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        system: systemPrompt,
+        max_tokens: 1200,
+        system: fullSystemPrompt,
         messages
       })
     });
@@ -239,7 +258,14 @@ export default async function handler(req, res) {
       return res.status(claudeRes.status).json(claudeData);
     }
 
-    const replyText = claudeData.content?.[0]?.text || '';
+    const rawText = claudeData.content?.[0]?.text || '';
+
+    // ── 6. Parsear metadatos del bloque <omme_meta> ───────────────────────────
+    const { cleanResponse, meta } = parseClaudeResponse(rawText);
+
+    const lastUserMessage = typeof messages[messages.length - 1]?.content === 'string'
+      ? messages[messages.length - 1].content
+      : '';
 
     // ── 7. Guardar intercambio en Conversations ───────────────────────────────
     if (airtableOk && userRecord) {
@@ -249,7 +275,7 @@ export default async function handler(req, res) {
           [F.conversations.user_id]:         userId,
           [F.conversations.agent_id]:        currentAgent,
           [F.conversations.message_in]:      lastUserMessage,
-          [F.conversations.message_out]:     replyText,
+          [F.conversations.message_out]:     cleanResponse,
           [F.conversations.timestamp]:       new Date().toISOString()
         });
       } catch (err) {
@@ -257,48 +283,44 @@ export default async function handler(req, res) {
       }
     }
 
-    // ── 8. Detectar handoff en la respuesta ──────────────────────────────────
+    // ── 8. Actualizar Airtable con metadatos de Claude ────────────────────────
     if (airtableOk && userRecord) {
-      let newAgent = null;
+      const updates = {};
 
-      if (currentAgent === 'agent_01') {
-        const lower = replyText.toLowerCase();
-        if (HANDOFF_01_TRIGGERS.some(t => lower.includes(t.toLowerCase()))) {
-          newAgent = 'agent_02';
-        }
+      // Perfil detectado
+      if (meta.perfil && meta.perfil !== 'null') {
+        updates[F.users.detected_profile] = meta.perfil;
       }
-      // agent_02 → agent_03: por webhook de intake_completed (ver /api/intake-webhook)
-      // agent_03 → agent_04: por webhook de Shopify (ver /api/shopify-webhook)
 
-      if (newAgent) {
+      // Señal de alerta → escalamiento
+      if (meta.senal_alerta === true) {
+        updates[F.users.escalation_flag]       = true;
+        updates[F.users.human_takeover_active] = true;
+      }
+
+      // Handoff de agente
+      if (meta.handoff && meta.handoff !== 'null') {
+        updates[F.users.current_agent] = meta.handoff;
+        currentAgent = meta.handoff;
+      }
+
+      if (Object.keys(updates).length > 0) {
         try {
-          await atPatch(AIRTABLE_API_KEY, TABLES.users, userRecord.id, {
-            [F.users.current_agent]: newAgent
-          });
-          currentAgent = newAgent;
+          await atPatch(AIRTABLE_API_KEY, TABLES.users, userRecord.id, updates);
         } catch (err) {
-          console.error('[Airtable] handoff update failed:', err.message);
+          console.error('[Airtable] user update failed:', err.message);
         }
       }
     }
 
-    // ── 9. Detectar señal de alerta en la respuesta del agente ────────────────
-    if (airtableOk && userRecord && replyText.toLowerCase().includes(AGENT_ALERT_PHRASE)) {
-      try {
-        await atPatch(AIRTABLE_API_KEY, TABLES.users, userRecord.id, {
-          [F.users.escalation_flag]:       true,
-          [F.users.human_takeover_active]: true
-        });
-      } catch (err) {
-        console.error('[Airtable] agent alert escalation failed:', err.message);
-      }
-    }
-
-    // ── 10. Responder al frontend ─────────────────────────────────────────────
+    // ── 9. Responder al frontend ──────────────────────────────────────────────
     return res.status(200).json({
-      ...claudeData,
+      content: [{ type: 'text', text: cleanResponse }],
       userId,
-      currentAgent
+      currentAgent,
+      humanTakeover:     meta.senal_alerta === true,
+      detectedProfile:   meta.perfil || null,
+      escalationReason:  meta.razon_escalamiento || null
     });
 
   } catch (err) {

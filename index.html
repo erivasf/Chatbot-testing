@@ -531,22 +531,13 @@ function updateInsightPanel(data, userMessage) {
   }
 
   // Human takeover
-  if (data.human_takeover) {
+  if (data.humanTakeover) {
     document.getElementById('status-takeover').textContent = 'Activo';
     document.getElementById('status-takeover').style.color = '#dc2626';
   }
 
-  // Detección de perfil basada en palabras clave del mensaje
-  const profileTags = document.getElementById('profile-tags');
-  const msg = userMessage.toLowerCase();
-  const profiles = [];
-  if (msg.includes('caro') || msg.includes('precio') || msg.includes('barato') || msg.includes('cuesta')) profiles.push('resistente_precio');
-  if (msg.includes('miedo') || msg.includes('efectos') || msg.includes('preocupa') || msg.includes('riesgo')) profiles.push('ansioso');
-  if (msg.includes('choiz') || msg.includes('competencia') || msg.includes('otro') || msg.includes('compara')) profiles.push('esceptico');
-  if (msg.includes('cómo funciona') || msg.includes('mecanismo') || msg.includes('por qué')) profiles.push('curioso');
-  if (msg.includes('ya') || msg.includes('ahora') || msg.includes('inmediato') || msg.includes('rápido')) profiles.push('urgente');
-
-  if (profiles.length > 0) {
+  // Perfil detectado por Claude (viene del backend)
+  if (data.detectedProfile && data.detectedProfile !== 'null') {
     const tagLabels = {
       'resistente_precio': 'Resistente precio',
       'ansioso':           'Ansioso',
@@ -563,9 +554,9 @@ function updateInsightPanel(data, userMessage) {
       'urgente':           'tag-urgente',
       'directo':           'tag-directo'
     };
-    profileTags.innerHTML = profiles.map(p =>
-      `<div class="tag ${tagClasses[p]}">${tagLabels[p]}</div>`
-    ).join('');
+    const p = data.detectedProfile;
+    document.getElementById('profile-tags').innerHTML =
+      `<div class="tag ${tagClasses[p] || 'tag-empty'}">${tagLabels[p] || p}</div>`;
   }
 
   // Señales de conversación
@@ -626,7 +617,7 @@ async function send() {
     }
 
     // Human takeover
-    if (data.human_takeover) {
+    if (data.humanTakeover) {
       const msg = data.message || 'Un miembro de nuestro equipo te está atendiendo. Por favor espera.';
       addMessage(msg, 'agent');
       updateInsightPanel(data, text);
