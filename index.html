@@ -344,6 +344,35 @@ html, body {
   line-height: 1.4;
 }
 .signal-empty { font-size: 11px; color: rgba(13,13,13,0.25); font-style: italic; }
+
+.flags-list { display: flex; flex-direction: column; gap: 5px; }
+.flag-item {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.flag-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.flag-competitors {
+  background: rgba(249,115,22,0.08);
+  color: #c2410c;
+  border: 1px solid rgba(249,115,22,0.18);
+}
+.flag-competitors .flag-dot { background: #f97316; }
+.flag-treatments {
+  background: rgba(139,92,246,0.08);
+  color: #6d28d9;
+  border: 1px solid rgba(139,92,246,0.18);
+}
+.flag-treatments .flag-dot { background: #8b5cf6; }
+.flag-empty { font-size: 11px; color: rgba(13,13,13,0.25); font-style: italic; }
 </style>
 </head>
 <body>
@@ -424,11 +453,17 @@ html, body {
       <div id="intake-label" data-progress="0" style="font-size: 10px; color: rgba(13,13,13,0.35);">Sin iniciar</div>
     </div>
 
+    <!-- Flags activas (señales de alto valor) -->
     <div class="panel-section">
-      <div class="section-label">Señales de conversación</div>
-      <div class="signal-item" id="competitors-flag" style="display:none; border-left-color: #f97316; margin-bottom: 5px;">
-        Explorando competidores activamente
+      <div class="section-label">Señales activas</div>
+      <div class="flags-list" id="flags-list">
+        <div class="flag-empty">Sin señales aún</div>
       </div>
+    </div>
+
+    <!-- Historial de conversación (mensajes cronológicos) -->
+    <div class="panel-section">
+      <div class="section-label">Conversación</div>
       <div class="signals-list" id="signals-list">
         <div class="signal-empty">Esperando interacción...</div>
       </div>
@@ -578,6 +613,32 @@ function updateIntakeProgress(newProgress, completed) {
   }
 }
 
+// ─── Flags activas ────────────────────────────────────────────────────────────
+function updateFlags(data) {
+  const flagsList = document.getElementById('flags-list');
+  if (!flagsList) return;
+
+  const existingEmpty = flagsList.querySelector('.flag-empty');
+
+  if (data.exploringCompetitors && !document.getElementById('flag-competitors')) {
+    if (existingEmpty) existingEmpty.remove();
+    const flag = document.createElement('div');
+    flag.id = 'flag-competitors';
+    flag.className = 'flag-item flag-competitors';
+    flag.innerHTML = '<div class="flag-dot"></div>Explorando competidores';
+    flagsList.appendChild(flag);
+  }
+
+  if (data.triedPreviousTreatments && !document.getElementById('flag-treatments')) {
+    if (existingEmpty) existingEmpty.remove();
+    const flag = document.createElement('div');
+    flag.id = 'flag-treatments';
+    flag.className = 'flag-item flag-treatments';
+    flag.innerHTML = '<div class="flag-dot"></div>Usó tratamientos previos';
+    flagsList.appendChild(flag);
+  }
+}
+
 // ─── Insight Panel ────────────────────────────────────────────────────────────
 function updateInsightPanel(data, userMessage) {
   // Agente activo
@@ -627,11 +688,8 @@ function updateInsightPanel(data, userMessage) {
     updateIntakeProgress(data.intakeProgress, data.intakeCompleted);
   }
 
-  // Explorando competidores
-  if (data.exploringCompetitors) {
-    const el = document.getElementById('competitors-flag');
-    if (el) el.style.display = 'block';
-  }
+  // Flags activas
+  updateFlags(data);
 
   // Señales de conversación
   const signalsList = document.getElementById('signals-list');

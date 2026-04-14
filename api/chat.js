@@ -18,8 +18,9 @@ const F = {
     exploring_competitors: 'fldae3lxMwex9doU6',
     decision_driver:       'fld1H3h7jO58hgNud',
     profile_history:       'fldJeZwBmsPfOw4Ls',
-    intake_completed:      'fldNLb3R3YB0gkvkC',
-    crossover_ed:          'fldDOUriQwGsquYOJ'
+    intake_completed:            'fldNLb3R3YB0gkvkC',
+    crossover_ed:                'fldDOUriQwGsquYOJ',
+    tried_previous_treatments:   'fldDKGYSDWgpl0sKC'
   },
   agentPrompts: {
     agent_id:      'fldP6vlaSBUt07HZX',
@@ -166,7 +167,8 @@ function parseClaudeResponse(rawResponse) {
     perfil: null, senal_alerta: false, razon_escalamiento: null,
     handoff: null, razon_handoff: null,
     exploring_competitors: false, decision_driver: null, profile_evolution: false,
-    intake_progress: 0, intake_completed: false, crossover_ed: false, fotos_solicitadas: false
+    intake_progress: 0, intake_completed: false, crossover_ed: false, fotos_solicitadas: false,
+    tried_previous_treatments: false
   };
 
   if (metaMatch) {
@@ -360,6 +362,11 @@ export default async function handler(req, res) {
         updates[F.users.crossover_ed] = 'Sí';
       }
 
+      // Tratamientos previos
+      if (meta.tried_previous_treatments === true) {
+        updates[F.users.tried_previous_treatments] = true;
+      }
+
       // Señal de alerta → escalamiento
       if (meta.senal_alerta === true) {
         updates[F.users.escalation_flag]       = true;
@@ -392,9 +399,10 @@ export default async function handler(req, res) {
       exploringCompetitors: meta.exploring_competitors === true,
       decisionDriver:       meta.decision_driver || null,
       profileEvolution:     meta.profile_evolution === true,
-      intakeProgress:       meta.intake_progress || 0,
-      intakeCompleted:      meta.intake_completed === true,
-      fotosSolicitadas:     meta.fotos_solicitadas === true
+      intakeProgress:            meta.intake_progress || 0,
+      intakeCompleted:           meta.intake_completed === true,
+      fotosSolicitadas:          meta.fotos_solicitadas === true,
+      triedPreviousTreatments:   meta.tried_previous_treatments === true
     });
 
   } catch (err) {
