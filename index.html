@@ -499,6 +499,7 @@ let userId              = localStorage.getItem('omme_user_id') || null;
 let currentAgent        = localStorage.getItem('omme_current_agent') || 'agent_01';
 let humanTakeoverActive = false;
 let photosButtonShown   = false;
+let purchaseButtonShown = false;
 
 const AGENT_NAMES = {
   agent_01: 'Advisor',
@@ -772,6 +773,44 @@ function simulatePhotoUpload() {
   }, 500);
 }
 
+// ─── Purchase simulation ──────────────────────────────────────────────────────
+function showPurchaseSimulationButton(plan) {
+  if (purchaseButtonShown) return;
+  purchaseButtonShown = true;
+
+  const planLabel = plan === '12_meses' ? '12 meses — $8,699 MXN' : '6 meses — $4,799 MXN';
+
+  const btn = document.createElement('div');
+  btn.id = 'purchase-sim-btn';
+  btn.style.cssText = 'align-self: flex-start; margin: 4px 0; display: flex; flex-direction: column; gap: 8px; max-width: 82%;';
+  btn.innerHTML = `
+    <div style="background: linear-gradient(135deg, #EFF6FF, #DBEAFE); border-radius: 14px; border-top-left-radius: 3px; padding: 12px 14px; font-size: 12.5px; color: #1e3a5f; line-height: 1.5; box-shadow: 0 1px 6px rgba(37,99,235,0.08);">
+      🛒 Plan seleccionado: ${planLabel}
+    </div>
+    <button onclick="simulatePurchase()" style="background: #15803d; color: white; border: none; border-radius: 10px; padding: 10px 16px; font-size: 12px; font-weight: 600; cursor: pointer; letter-spacing: 0.02em; text-align: left; transition: opacity 0.15s;">
+      Simulación de compra completada →
+    </button>`;
+  messagesEl.appendChild(btn);
+  scrollToBottom();
+}
+
+function simulatePurchase() {
+  const btn = document.getElementById('purchase-sim-btn');
+  if (btn) btn.remove();
+
+  const purchaseText = 'Completé la compra';
+  addMessage(purchaseText, 'user');
+  history.push({ role: 'user', content: purchaseText });
+
+  sendBtn.disabled = true;
+  isLoading = true;
+  setTimeout(async () => {
+    await dispatchToAPI(purchaseText);
+    isLoading = false;
+    sendBtn.disabled = !inputEl.value.trim() || humanTakeoverActive;
+  }, 500);
+}
+
 // ─── API dispatch (shared by send() and simulatePhotoUpload()) ────────────────
 async function dispatchToAPI(text) {
   showTyping();
@@ -813,6 +852,11 @@ async function dispatchToAPI(text) {
     if (data.fotosSolicitadas && !photosButtonShown) {
       photosButtonShown = true;
       showPhotoSimulationButton();
+    }
+
+    // Botón de simulación de compra cuando el agente envía el link
+    if (data.linkEnviado && data.planSeleccionado && !purchaseButtonShown) {
+      showPurchaseSimulationButton(data.planSeleccionado);
     }
 
     // Banner de compra confirmada
