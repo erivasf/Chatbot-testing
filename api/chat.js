@@ -20,7 +20,10 @@ const F = {
     profile_history:       'fldJeZwBmsPfOw4Ls',
     intake_completed:            'fldNLb3R3YB0gkvkC',
     crossover_ed:                'fldDOUriQwGsquYOJ',
-    tried_previous_treatments:   'fldDKGYSDWgpl0sKC'
+    tried_previous_treatments:   'fldDKGYSDWgpl0sKC',
+    plan_seleccionado:           'fldCTSvb6UxU870qx',
+    link_enviado:                'fldnoK3PPa9vyluYD',
+    compra_confirmada:           'fldqvU9q6MAVAPDd6'
   },
   agentPrompts: {
     agent_id:      'fldP6vlaSBUt07HZX',
@@ -168,7 +171,8 @@ function parseClaudeResponse(rawResponse) {
     handoff: null, razon_handoff: null,
     exploring_competitors: false, decision_driver: null, profile_evolution: false,
     intake_progress: 0, intake_completed: false, crossover_ed: false, fotos_solicitadas: false,
-    tried_previous_treatments: false
+    tried_previous_treatments: false,
+    plan_seleccionado: null, link_enviado: false, compra_confirmada: false
   };
 
   if (metaMatch) {
@@ -367,6 +371,21 @@ export default async function handler(req, res) {
         updates[F.users.tried_previous_treatments] = true;
       }
 
+      // Plan seleccionado
+      if (meta.plan_seleccionado && meta.plan_seleccionado !== 'null') {
+        updates[F.users.plan_seleccionado] = meta.plan_seleccionado;
+      }
+
+      // Link enviado
+      if (meta.link_enviado === true) {
+        updates[F.users.link_enviado] = true;
+      }
+
+      // Compra confirmada
+      if (meta.compra_confirmada === true) {
+        updates[F.users.compra_confirmada] = true;
+      }
+
       // Señal de alerta → escalamiento
       if (meta.senal_alerta === true) {
         updates[F.users.escalation_flag]       = true;
@@ -402,7 +421,10 @@ export default async function handler(req, res) {
       intakeProgress:            meta.intake_progress || 0,
       intakeCompleted:           meta.intake_completed === true,
       fotosSolicitadas:          meta.fotos_solicitadas === true,
-      triedPreviousTreatments:   meta.tried_previous_treatments === true
+      triedPreviousTreatments:   meta.tried_previous_treatments === true,
+      planSeleccionado:          meta.plan_seleccionado || null,
+      linkEnviado:               meta.link_enviado === true,
+      compraConfirmada:          meta.compra_confirmada === true
     });
 
   } catch (err) {

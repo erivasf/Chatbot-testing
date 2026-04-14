@@ -443,6 +443,10 @@ html, body {
         <span class="meta-key">Canal</span>
         <span class="meta-val">Web (simulador)</span>
       </div>
+      <div class="meta-row">
+        <span class="meta-key">Plan</span>
+        <span class="meta-val" id="panel-plan">Sin seleccionar</span>
+      </div>
     </div>
 
     <div class="panel-section">
@@ -707,6 +711,15 @@ function updateInsightPanel(data, userMessage) {
   // Flags activas
   updateFlags(data);
 
+  // Plan seleccionado
+  if (data.planSeleccionado) {
+    const planEl = document.getElementById('panel-plan');
+    if (planEl) {
+      planEl.textContent = data.planSeleccionado === '6_meses' ? '6 meses' : '12 meses';
+      planEl.style.color = '#6d28d9';
+    }
+  }
+
   // Señales de conversación
   const signalsList = document.getElementById('signals-list');
   if (!signalsList) return;
@@ -800,6 +813,15 @@ async function dispatchToAPI(text) {
     if (data.fotosSolicitadas && !photosButtonShown) {
       photosButtonShown = true;
       showPhotoSimulationButton();
+    }
+
+    // Banner de compra confirmada
+    if (data.compraConfirmada) {
+      const banner = document.createElement('div');
+      banner.style.cssText = 'align-self:center;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.20);border-radius:10px;padding:10px 16px;font-size:11.5px;color:#15803d;text-align:center;margin:8px 0;';
+      banner.textContent = '✓ Compra completada — bienvenido a Omme';
+      messagesEl.appendChild(banner);
+      scrollToBottom();
     }
 
     updateInsightPanel(data, text);
