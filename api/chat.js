@@ -23,7 +23,8 @@ const F = {
     tried_previous_treatments:   'fldDKGYSDWgpl0sKC',
     plan_seleccionado:           'fldCTSvb6UxU870qx',
     link_enviado:                'fldnoK3PPa9vyluYD',
-    compra_confirmada:           'fldqvU9q6MAVAPDd6'
+    compra_confirmada:           'fldqvU9q6MAVAPDd6',
+    plan_activo:                 'fldBEzIQW5CeXdrue'
   },
   agentPrompts: {
     agent_id:      'fldP6vlaSBUt07HZX',
@@ -172,7 +173,8 @@ function parseClaudeResponse(rawResponse) {
     exploring_competitors: false, decision_driver: null, profile_evolution: false,
     intake_progress: 0, intake_completed: false, crossover_ed: false, fotos_solicitadas: false,
     tried_previous_treatments: false,
-    plan_seleccionado: null, link_enviado: false, compra_confirmada: false
+    plan_seleccionado: null, link_enviado: false, compra_confirmada: false,
+    score_delta: 0, score_reason: null
   };
 
   if (metaMatch) {
@@ -371,9 +373,10 @@ export default async function handler(req, res) {
         updates[F.users.tried_previous_treatments] = true;
       }
 
-      // Plan seleccionado
+      // Plan seleccionado + plan activo
       if (meta.plan_seleccionado && meta.plan_seleccionado !== 'null') {
         updates[F.users.plan_seleccionado] = meta.plan_seleccionado;
+        updates[F.users.plan_activo] = true;
       }
 
       // Link enviado
@@ -424,7 +427,9 @@ export default async function handler(req, res) {
       triedPreviousTreatments:   meta.tried_previous_treatments === true,
       planSeleccionado:          meta.plan_seleccionado || null,
       linkEnviado:               meta.link_enviado === true,
-      compraConfirmada:          meta.compra_confirmada === true
+      compraConfirmada:          meta.compra_confirmada === true,
+      scoreDelta:                meta.score_delta || 0,
+      scoreReason:               meta.score_reason || null
     });
 
   } catch (err) {

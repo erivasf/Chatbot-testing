@@ -465,11 +465,21 @@ html, body {
       </div>
     </div>
 
-    <!-- Historial de conversación (mensajes cronológicos) -->
-    <div class="panel-section">
-      <div class="section-label">Conversación</div>
-      <div class="signals-list" id="signals-list">
-        <div class="signal-empty">Esperando interacción...</div>
+    <!-- Omme Health Score -->
+    <div class="panel-section" id="ohs-section">
+      <div class="section-label">Omme Health Score</div>
+
+      <div style="text-align:center; padding:12px 0 8px;">
+        <div id="ohs-score" style="font-size:42px;font-weight:700;color:#0d0d0d;line-height:1;">50</div>
+        <div id="ohs-label" style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(13,13,13,0.35);margin-top:4px;">Stable</div>
+      </div>
+
+      <div style="background:rgba(0,0,0,0.06);border-radius:6px;height:5px;overflow:hidden;margin:4px 0 10px;">
+        <div id="ohs-bar" style="height:100%;width:50%;background:#185FA5;border-radius:6px;transition:width 0.5s ease,background 0.5s ease;"></div>
+      </div>
+
+      <div id="ohs-feed" style="display:flex;flex-direction:column;gap:4px;max-height:130px;overflow-y:auto;">
+        <div style="font-size:10px;color:rgba(13,13,13,0.25);font-style:italic;">No events yet</div>
       </div>
     </div>
 
@@ -500,15 +510,16 @@ let currentAgent        = localStorage.getItem('omme_current_agent') || 'agent_0
 let humanTakeoverActive = false;
 let photosButtonShown   = false;
 let purchaseButtonShown = false;
+let ohsScore            = 50;
 
 const AGENT_NAMES = {
   agent_01: 'Advisor',
   agent_02: 'Triage',
-  agent_03: 'Conversión',
+  agent_03: 'Conversion',
   agent_04: 'Onboarding',
-  agent_05: 'Seguimiento',
+  agent_05: 'Retention',
   agent_06: 'NPS',
-  agent_07: 'Atención'
+  agent_07: 'Churn Defense'
 };
 
 // ─── DOM ──────────────────────────────────────────────────────────────────────
@@ -634,6 +645,53 @@ function updateIntakeProgress(newProgress, completed) {
   }
 }
 
+// ─── OHS (Omme Health Score) ──────────────────────────────────────────────────
+function updateOHS(delta, reason) {
+  if (!delta || delta === 0) return;
+  ohsScore = Math.max(0, Math.min(100, ohsScore + delta));
+
+  const scoreEl = document.getElementById('ohs-score');
+  const bar = document.getElementById('ohs-bar');
+  const label = document.getElementById('ohs-label');
+  if (!scoreEl || !bar || !label) return;
+
+  scoreEl.textContent = ohsScore;
+  bar.style.width = ohsScore + '%';
+
+  if (ohsScore >= 75) {
+    bar.style.background = '#22C55E';
+    label.textContent = 'Promoter';
+    label.style.color = '#15803d';
+  } else if (ohsScore >= 50) {
+    bar.style.background = '#185FA5';
+    label.textContent = 'Stable';
+    label.style.color = 'rgba(13,13,13,0.35)';
+  } else if (ohsScore >= 30) {
+    bar.style.background = '#f97316';
+    label.textContent = 'At Risk';
+    label.style.color = '#c2410c';
+  } else {
+    bar.style.background = '#dc2626';
+    label.textContent = 'Critical';
+    label.style.color = '#991b1b';
+  }
+
+  const feed = document.getElementById('ohs-feed');
+  if (!feed) return;
+  const empty = feed.querySelector('div[style*="italic"]');
+  if (empty) empty.remove();
+
+  const item = document.createElement('div');
+  item.style.cssText = 'display:flex;justify-content:space-between;align-items:center;font-size:10.5px;padding:3px 0;border-bottom:1px solid rgba(0,0,0,0.04);';
+  const sign = delta > 0 ? '+' : '';
+  const color = delta > 0 ? '#15803d' : '#dc2626';
+  item.innerHTML = `<span style="color:rgba(13,13,13,0.45);flex:1;">${reason}</span><span style="font-weight:700;color:${color};margin-left:8px;">${sign}${delta}</span>`;
+  feed.insertBefore(item, feed.firstChild);
+
+  const items = feed.querySelectorAll('div[style*="border-bottom"]');
+  if (items.length > 6) items[items.length - 1].remove();
+}
+
 // ─── Flags activas ────────────────────────────────────────────────────────────
 function updateFlags(data) {
   const flagsList = document.getElementById('flags-list');
@@ -721,21 +779,10 @@ function updateInsightPanel(data, userMessage) {
     }
   }
 
-  // Señales de conversación
-  const signalsList = document.getElementById('signals-list');
-  if (!signalsList) return;
-  const existingEmpty = signalsList.querySelector('.signal-empty');
-  if (existingEmpty) existingEmpty.remove();
-
-  const signalDiv = document.createElement('div');
-  signalDiv.className = 'signal-item';
-  const time = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-  signalDiv.textContent = `${time} — ${userMessage.substring(0, 50)}${userMessage.length > 50 ? '...' : ''}`;
-  signalsList.appendChild(signalDiv);
-
-  // Mantener máximo 5 señales
-  const signals = signalsList.querySelectorAll('.signal-item');
-  if (signals.length > 5) signals[0].remove();
+  // OHS
+  if (data.scoreDelta && data.scoreReason) {
+    updateOHS(data.scoreDelta, data.scoreReason);
+  }
 }
 
 // ─── Photo simulation ─────────────────────────────────────────────────────────
