@@ -459,6 +459,7 @@ let isLoading           = false;
 let userId              = localStorage.getItem('omme_user_id') || null;
 let currentAgent        = localStorage.getItem('omme_current_agent') || 'agent_01';
 let humanTakeoverActive = false;
+let photosButtonShown   = false;
 
 const AGENT_NAMES = {
   agent_01: 'Advisor',
@@ -505,41 +506,25 @@ function addMessage(text, role) {
   div.className = role === 'user' ? 'bubble-user' : 'bubble-agent';
 
   if (role === 'assistant') {
-    const hasOptions = /\d+\.\s/.test(text);
+    const formatted = text.replace(/(\s)(\d+\.)\s/g, '\n$2 ');
+    const lines = formatted.split('\n').map(l => l.trim()).filter(Boolean);
 
-    if (hasOptions) {
-      const parts = text.split(/(?=\b\d+\.\s)/);
-      let html = '';
+    let html = '';
+    lines.forEach(line => {
+      if (/^\d+\./.test(line)) {
+        html += `<div style="padding:4px 0 4px 10px;border-left:2px solid rgba(37,99,235,0.20);margin:4px 0;font-size:12px;color:#1e3a5f;line-height:1.5;">${line}</div>`;
+      } else {
+        html += `<div style="margin-bottom:6px;font-size:12.5px;line-height:1.56;color:#1e3a5f;">${line}</div>`;
+      }
+    });
 
-      parts.forEach((part) => {
-        const trimmed = part.trim();
-        if (!trimmed) return;
-
-        if (/^\d+\.\s/.test(trimmed)) {
-          html += `<div style="
-            padding: 4px 0 4px 8px;
-            border-left: 2px solid rgba(37,99,235,0.3);
-            margin: 4px 0;
-            font-size: 12px;
-            color: #2c5282;
-            line-height: 1.5;
-          ">${trimmed}</div>`;
-        } else {
-          html += `<div style="margin-bottom: 8px; line-height: 1.56;">${trimmed}</div>`;
-        }
-      });
-
-      div.innerHTML = html;
-    } else {
-      div.textContent = text;
-    }
+    div.innerHTML = html || text;
   } else {
     div.textContent = text;
   }
 
   messagesEl.appendChild(div);
   scrollToBottom();
-  return div;
 }
 
 function showTyping() {
@@ -569,6 +554,28 @@ function disableInputForHumanTakeover() {
   inputEl.disabled = true;
   sendBtn.disabled = true;
   bannerEl.style.display = 'block';
+}
+
+// ─── Intake Progress ──────────────────────────────────────────────────────────
+function updateIntakeProgress(newProgress, completed) {
+  const label = document.getElementById('intake-label');
+  const bar = document.getElementById('intake-bar');
+  if (!label || !bar) return;
+
+  const current = parseInt(label.dataset.progress || '0');
+  const progress = Math.max(current, newProgress || 0);
+
+  label.dataset.progress = progress;
+
+  if (completed) {
+    bar.style.width = '100%';
+    bar.style.background = '#22C55E';
+    label.textContent = 'Evaluación completa';
+    label.style.color = '#15803d';
+  } else if (progress > 0) {
+    bar.style.width = Math.round((progress / 16) * 100) + '%';
+    label.textContent = 'Pregunta ' + progress + ' de 16';
+  }
 }
 
 // ─── Insight Panel ────────────────────────────────────────────────────────────
@@ -615,28 +622,9 @@ function updateInsightPanel(data, userMessage) {
     if (el) el.innerHTML = `<div class="tag ${tagClasses[p] || 'tag-empty'}">${tagLabels[p] || p}</div>`;
   }
 
-  // Progreso del intake (nunca puede bajar)
-  if (data.intakeProgress > 0) {
-    const label = document.getElementById('intake-label');
-    const bar = document.getElementById('intake-bar');
-    const currentProgress = parseInt(label?.dataset?.progress || '0');
-    const newProgress = Math.max(currentProgress, data.intakeProgress);
-
-    const pct = Math.round((newProgress / 16) * 100);
-    if (bar) bar.style.width = pct + '%';
-    if (label) {
-      label.textContent = `Pregunta ${newProgress} de 16`;
-      label.dataset.progress = newProgress;
-    }
-  }
-  if (data.intakeCompleted) {
-    const bar = document.getElementById('intake-bar');
-    const label = document.getElementById('intake-label');
-    if (bar) { bar.style.width = '100%'; bar.style.background = '#22C55E'; }
-    if (label) {
-      label.textContent = 'Evaluación completa ✓';
-      label.dataset.progress = '16';
-    }
+  // Progreso del intake
+  if (data.intakeProgress || data.intakeCompleted) {
+    updateIntakeProgress(data.intakeProgress, data.intakeCompleted);
   }
 
   // Explorando competidores
@@ -734,8 +722,9 @@ async function dispatchToAPI(text) {
     history.push({ role: 'assistant', content: reply });
     addMessage(reply, 'agent');
 
-    // Botón de fotos si agent_02 lo solicitó (solo una vez)
-    if (data.fotosSolicitadas && !document.getElementById('photo-sim-btn')) {
+    // Botón de fotos si agent_02 lo solicitó (solo una vez por sesión)
+    if (data.fotosSolicitadas && !photosButtonShown) {
+      photosButtonShown = true;
       showPhotoSimulationButton();
     }
 
