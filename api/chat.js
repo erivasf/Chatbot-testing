@@ -100,7 +100,7 @@ Reglas para profile_evolution:
 - false: si es consistente con lo anterior
 
 Reglas para campos de intake (aplican cuando eres agent_02):
-- intake_progress: número de preguntas del cuestionario que ya han sido respondidas (0-16). Incrementa en 1 por cada pregunta completada en este turno.
+- intake_progress: TOTAL ACUMULADO de preguntas del cuestionario que el usuario ha respondido hasta ahora (0-16). Cuenta TODAS las preguntas respondidas en toda la conversación, no solo las de este turno. Si el usuario respondió 2 preguntas en un solo mensaje, suma ambas. Si tú hiciste 2 preguntas en un mensaje y el usuario las respondió, suma ambas. Revisa el historial completo de la conversación para dar el número correcto.
 - intake_completed: true cuando las 16 preguntas del cuestionario han sido respondidas
 - crossover_ed: true si el usuario muestra interés en tratamiento para disfunción eréctil durante la conversación
 - fotos_solicitadas: true en el turno exacto en que le pides al usuario que envíe las 6 fotos de su cabello. Solo true una vez.`;
