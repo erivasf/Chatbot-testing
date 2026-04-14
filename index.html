@@ -4,91 +4,52 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
-<title>Omme — Salud masculina</title>
+<title>Omme — Agent Testing</title>
 <style>
-@keyframes spin  { 0%   { transform: rotate(0deg);   } 100% { transform: rotate(360deg); } }
-@keyframes pulse { 0%, 100% { transform: scale(1);   } 50%  { transform: scale(1.03);   } }
-@keyframes bop   { 0%,60%,100% { transform: translateY(0);   opacity: .3; }
-                   30%          { transform: translateY(-5px); opacity: 1;  } }
+@keyframes spin  { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+@keyframes bop   { 0%,60%,100% { transform: translateY(0); opacity: .3; }
+                   30%          { transform: translateY(-5px); opacity: 1; } }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  height: 100%;
-  background: #EDECEA;
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
-  margin: 0;
-  padding: 0;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: #0a0a0a;
+  font-family: 'Berkeley Mono', 'Fira Code', 'Geist Mono', 'SF Mono', monospace;
+  color: #e2e2e2;
 }
 
 .app-layout {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  gap: 24px;
-  padding: 24px;
-}
-
-/* Desktop: chat + panel lado a lado */
-@media (min-width: 768px) {
-  .app-layout {
-    align-items: flex-start;
-    padding-top: 40px;
-  }
-}
-
-/* Mobile: solo el chat, sin panel */
-@media (max-width: 767px) {
-  .app-layout {
-    padding: 0;
-    gap: 0;
-  }
-  .chat-container {
-    border-radius: 0 !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
-  }
-  .insight-panel {
-    display: none !important;
-  }
-}
-
-.chat-container {
-  width: 100%;
-  max-width: 400px;
+  display: grid;
+  grid-template-columns: 280px 1fr 320px;
+  grid-template-rows: 48px 1fr;
   height: 100vh;
-  max-height: 720px;
-  display: flex;
-  flex-direction: column;
-  background: #EDECEA;
-  border-radius: 32px;
-  overflow: hidden;
-  border: 1px solid rgba(0,0,0,0.07);
-  box-shadow: 0 16px 56px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.07);
-  flex-shrink: 0;
+  width: 100vw;
 }
 
-.chat-header {
+/* ─── Top Bar ──────────────────────────────────────────────────────────────── */
+.top-bar {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 16px 16px 13px;
-  background: rgba(237,236,234,0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(0,0,0,0.06);
-  flex-shrink: 0;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: #0d0d0d;
+  border-bottom: 1px solid #1a1a1a;
+  height: 48px;
+  position: relative;
 }
+.top-bar-left, .top-bar-right { display: flex; align-items: center; gap: 10px; }
+.top-bar-center { position: absolute; left: 50%; transform: translateX(-50%); }
 
 .sphere-btn {
-  width: 36px; height: 36px;
   border-radius: 50%;
   flex-shrink: 0;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(37,99,235,0.18);
-  cursor: pointer;
 }
 .sphere-layer1 {
   position: absolute; inset: 0; border-radius: 50%;
@@ -96,7 +57,7 @@ html, body {
     #2563EB 0deg, #06B6D4 80deg, #0EA5E9 130deg,
     #14B8A6 180deg, #818CF8 240deg, #60A5FA 290deg, #2563EB 360deg);
   animation: spin 7s linear infinite;
-  filter: blur(3px);
+  filter: blur(2px);
 }
 .sphere-layer2 {
   position: absolute; inset: 0; border-radius: 50%;
@@ -110,304 +71,253 @@ html, body {
   background: radial-gradient(ellipse 40% 30% at 35% 30%, rgba(255,255,255,0.15) 0%, transparent 50%);
 }
 
-.brand-col { flex: 1; }
-.brand-sub {
-  font-size: 8.5px; letter-spacing: 0.08em;
-  color: rgba(13,13,13,0.38); text-transform: uppercase;
-  display: block; margin-top: 3px;
-}
-
-.agent-pill {
-  font-size: 8.5px; font-weight: 600; letter-spacing: 0.05em;
-  padding: 3px 9px; border-radius: 4px;
-  background: rgba(37,99,235,0.09); color: #1D4ED8;
-  border: 1px solid rgba(37,99,235,0.16); text-transform: uppercase;
-}
-
 .live-dot {
   width: 5px; height: 5px; border-radius: 50%;
   background: #22C55E;
   box-shadow: 0 0 5px rgba(34,197,94,0.6);
 }
 
-.messages-container {
-  flex: 1;
-  padding: 16px 13px;
+/* ─── Left Panel ───────────────────────────────────────────────────────────── */
+.left-panel {
+  background: #0d0d0d;
+  border-right: 1px solid #1a1a1a;
+  overflow-y: auto;
+  padding: 16px 0;
+}
+.panel-block {
+  padding: 12px 16px;
+  border-bottom: 1px solid #141414;
+}
+.panel-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: #333;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+.ctx-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+.ctx-key { font-size: 11px; color: #444; }
+.ctx-val { font-size: 11px; color: #aaa; font-weight: 500; }
+.status-ok { color: #22c55e !important; }
+
+/* ─── Tags (dark mode) ─────────────────────────────────────────────────────── */
+.tag {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+  padding: 3px 9px; border-radius: 3px; text-transform: uppercase;
+}
+.tag-ansioso   { background: rgba(251,146,60,0.12); color: #fb923c; border: 1px solid rgba(251,146,60,0.20); }
+.tag-esceptico { background: rgba(239,68,68,0.10);  color: #f87171; border: 1px solid rgba(239,68,68,0.18); }
+.tag-directo   { background: rgba(96,165,250,0.10); color: #60a5fa; border: 1px solid rgba(96,165,250,0.18); }
+.tag-curioso   { background: rgba(139,92,246,0.10); color: #a78bfa; border: 1px solid rgba(139,92,246,0.18); }
+.tag-urgente   { background: rgba(20,184,166,0.10); color: #2dd4bf; border: 1px solid rgba(20,184,166,0.18); }
+.tag-precio    { background: rgba(234,179,8,0.10);  color: #facc15; border: 1px solid rgba(234,179,8,0.18); }
+.tag-empty     { background: rgba(255,255,255,0.03); color: #333; border: 1px solid #1a1a1a; font-weight: 500; }
+
+/* ─── Flags (dark mode) ────────────────────────────────────────────────────── */
+.flags-list { display: flex; flex-direction: column; gap: 5px; }
+.flag-item {
+  font-size: 11px; font-weight: 500; padding: 6px 10px;
+  border-radius: 4px; display: flex; align-items: center; gap: 6px;
+}
+.flag-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.flag-competitors { background: rgba(249,115,22,0.08); color: #fb923c; border: 1px solid rgba(249,115,22,0.15); }
+.flag-competitors .flag-dot { background: #f97316; }
+.flag-treatments { background: rgba(139,92,246,0.08); color: #a78bfa; border: 1px solid rgba(139,92,246,0.15); }
+.flag-treatments .flag-dot { background: #8b5cf6; }
+
+/* ─── Chat Area ────────────────────────────────────────────────────────────── */
+.chat-area {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  background: #080808;
+  overflow: hidden;
+}
+.messages-container {
+  flex: 1;
   overflow-y: auto;
-  background: #EDECEA;
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
-
-.timestamp {
-  font-size: 9px; letter-spacing: 0.07em;
-  color: rgba(13,13,13,0.28);
-  text-align: center; text-transform: uppercase;
-  margin: 2px 0 4px;
-}
-
 .bubble-agent {
-  align-self: flex-start; max-width: 82%;
-  background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
-  border-radius: 14px; border-top-left-radius: 3px;
-  padding: 10px 13px;
-  font-size: 12.5px; line-height: 1.56; color: #1e3a5f;
-  box-shadow: 0 1px 6px rgba(37,99,235,0.08);
+  align-self: flex-start; max-width: 72%;
+  background: #111;
+  border: 1px solid #1e1e1e;
+  border-radius: 10px; border-top-left-radius: 2px;
+  padding: 10px 14px;
+  font-size: 13px; line-height: 1.6; color: #d4d4d4;
 }
-
-.bubble-agent div {
-  font-size: 12px;
-  line-height: 1.5;
-  color: #2c5282;
-}
-.bubble-agent span {
-  display: block;
-  margin-bottom: 6px;
-}
-
 .bubble-user {
-  align-self: flex-end; max-width: 72%;
-  background: #ffffff;
-  border: 1px solid rgba(0,0,0,0.08);
-  border-radius: 14px; border-top-right-radius: 3px;
-  padding: 10px 13px;
-  font-size: 12.5px; line-height: 1.56; color: #1a1a1a;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  align-self: flex-end; max-width: 60%;
+  background: #1a2744;
+  border: 1px solid #243460;
+  border-radius: 10px; border-top-right-radius: 2px;
+  padding: 10px 14px;
+  font-size: 13px; line-height: 1.6; color: #93c5fd;
 }
-
 .typing-indicator {
   align-self: flex-start;
-  background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
-  border-radius: 14px; border-top-left-radius: 3px;
+  background: #111;
+  border: 1px solid #1e1e1e;
+  border-radius: 10px; border-top-left-radius: 2px;
   padding: 11px 14px;
   display: flex; gap: 4px; align-items: center;
-  box-shadow: 0 1px 6px rgba(37,99,235,0.08);
 }
 .typing-dot {
   width: 5px; height: 5px; border-radius: 50%;
-  background: #93C5FD;
+  background: #333;
   animation: bop 1.4s ease-in-out infinite;
 }
 .typing-dot:nth-child(2) { animation-delay: .22s; }
 .typing-dot:nth-child(3) { animation-delay: .44s; }
-
+.error-bubble {
+  align-self: flex-start; max-width: 72%;
+  background: rgba(220,38,38,0.08);
+  border: 1px solid rgba(220,38,38,0.2);
+  border-radius: 10px; border-top-left-radius: 2px;
+  padding: 10px 14px;
+  font-size: 12px; color: #f87171; line-height: 1.5;
+}
 .human-takeover-banner {
   display: none;
-  margin: 0 0 4px;
   padding: 9px 12px;
-  background: rgba(37,99,235,0.06);
-  border: 1px solid rgba(37,99,235,0.14);
-  border-radius: 10px;
-  font-size: 11.5px; color: #1D4ED8;
+  background: rgba(96,165,250,0.06);
+  border: 1px solid rgba(96,165,250,0.14);
+  border-radius: 6px;
+  font-size: 11.5px; color: #60a5fa;
   text-align: center; line-height: 1.4;
 }
 
-.error-bubble {
-  align-self: flex-start; max-width: 82%;
-  background: #FEF2F2;
-  border: 1px solid rgba(239,68,68,0.2);
-  border-radius: 14px; border-top-left-radius: 3px;
-  padding: 10px 13px;
-  font-size: 12px; color: #B91C1C; line-height: 1.5;
-}
-
 .input-bar {
-  display: flex; align-items: center; gap: 8px;
-  padding: 12px 13px 16px;
-  background: rgba(237,236,234,0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(0,0,0,0.05);
-  flex-shrink: 0;
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 24px;
+  background: #0d0d0d;
+  border-top: 1px solid #1a1a1a;
 }
 .message-input {
   flex: 1;
-  background: #fff;
-  border: 1px solid rgba(0,0,0,0.08);
-  border-radius: 22px;
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 6px;
   padding: 9px 14px;
   font-size: 12px;
-  color: #0d0d0d;
+  color: #e2e2e2;
   outline: none;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  font-family: inherit;
 }
-.message-input::placeholder { color: rgba(13,13,13,0.30); }
-.message-input:disabled { opacity: 0.5; cursor: not-allowed; }
-
+.message-input::placeholder { color: #333; }
+.message-input:disabled { opacity: 0.3; cursor: not-allowed; }
 .send-button {
-  width: 34px; height: 34px;
-  border-radius: 50%;
-  background: #0d0d0d;
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  background: #185FA5;
   border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
   flex-shrink: 0;
-  transition: opacity 0.15s;
 }
-.send-button:hover { opacity: 0.8; }
-.send-button:disabled { opacity: 0.3; cursor: not-allowed; }
+.send-button:hover { background: #1d6fbf; }
+.send-button:disabled { opacity: 0.2; cursor: not-allowed; }
 
-/* ─── Insight Panel ─────────────────────────────────────────────────────────── */
-.insight-panel {
-  width: 240px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  background: rgba(255,255,255,0.55);
-  border: 1px solid rgba(0,0,0,0.07);
-  border-radius: 20px;
-  overflow: hidden;
-  max-height: 720px;
+/* ─── Right Panel ──────────────────────────────────────────────────────────── */
+.right-panel {
+  background: #0d0d0d;
+  border-left: 1px solid #1a1a1a;
   overflow-y: auto;
+  padding: 16px 0;
 }
 
-.panel-header {
+#ohs-feed div {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 14px 16px 10px;
-  border-bottom: 1px solid rgba(0,0,0,0.06);
-  background: rgba(255,255,255,0.7);
-  position: sticky;
-  top: 0;
-  backdrop-filter: blur(12px);
-}
-.panel-title {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-  color: rgba(13,13,13,0.45);
-}
-.panel-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: #22C55E;
-  box-shadow: 0 0 5px rgba(34,197,94,0.6);
-}
-
-.panel-section {
-  padding: 12px 16px;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
-}
-
-.section-label {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-  color: rgba(13,13,13,0.30);
-  margin-bottom: 8px;
-}
-
-.tag-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-.tag {
   font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  padding: 3px 9px;
-  border-radius: 20px;
-  text-transform: uppercase;
+  padding: 3px 0;
+  border-bottom: 1px solid #111;
+  color: #444;
 }
-.tag-ansioso   { background: rgba(251,146,60,0.12); color: #c2410c; border: 1px solid rgba(251,146,60,0.20); }
-.tag-esceptico { background: rgba(239,68,68,0.10);  color: #b91c1c; border: 1px solid rgba(239,68,68,0.18); }
-.tag-directo   { background: rgba(37,99,235,0.10);  color: #1d4ed8; border: 1px solid rgba(37,99,235,0.18); }
-.tag-curioso   { background: rgba(139,92,246,0.10); color: #6d28d9; border: 1px solid rgba(139,92,246,0.18); }
-.tag-urgente   { background: rgba(20,184,166,0.10); color: #0f766e; border: 1px solid rgba(20,184,166,0.18); }
-.tag-precio    { background: rgba(234,179,8,0.10);  color: #a16207; border: 1px solid rgba(234,179,8,0.18); }
-.tag-empty     { background: rgba(0,0,0,0.04); color: rgba(13,13,13,0.30); border: 1px solid rgba(0,0,0,0.07); font-weight: 500; }
-
-.meta-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-.meta-key  { font-size: 11px; color: rgba(13,13,13,0.40); }
-.meta-val  { font-size: 11px; font-weight: 600; color: #0d0d0d; }
-.status-ok { color: #15803d; }
-
-.signals-list { display: flex; flex-direction: column; gap: 5px; }
-.signal-item {
-  font-size: 11px;
-  color: rgba(13,13,13,0.55);
-  padding: 5px 8px;
-  background: rgba(37,99,235,0.05);
-  border-radius: 6px;
-  border-left: 2px solid rgba(37,99,235,0.25);
-  line-height: 1.4;
-}
-.signal-empty { font-size: 11px; color: rgba(13,13,13,0.25); font-style: italic; }
-
-.flags-list { display: flex; flex-direction: column; gap: 5px; }
-.flag-item {
-  font-size: 11px;
-  font-weight: 500;
-  padding: 6px 10px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.flag-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.flag-competitors {
-  background: rgba(249,115,22,0.08);
-  color: #c2410c;
-  border: 1px solid rgba(249,115,22,0.18);
-}
-.flag-competitors .flag-dot { background: #f97316; }
-.flag-treatments {
-  background: rgba(139,92,246,0.08);
-  color: #6d28d9;
-  border: 1px solid rgba(139,92,246,0.18);
-}
-.flag-treatments .flag-dot { background: #8b5cf6; }
-.flag-empty { font-size: 11px; color: rgba(13,13,13,0.25); font-style: italic; }
 </style>
 </head>
 <body>
 
 <div class="app-layout">
-  <div class="chat-container">
-    <div class="chat-header">
-      <div class="sphere-btn">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <div class="sphere-btn" style="width:22px;height:22px;">
         <div class="sphere-layer1"></div>
         <div class="sphere-layer2"></div>
         <div class="sphere-layer3"></div>
       </div>
-      <div class="brand-col">
-        <img src="/public/logo.svg" alt="Omme" height="16" style="display:block;margin-bottom:2px;" />
-        <span class="brand-sub">Salud masculina</span>
-      </div>
-      <span class="agent-pill" id="agent-badge">Advisor</span>
+      <span style="font-size:11px;font-weight:600;letter-spacing:0.15em;color:#fff;">OMME</span>
+      <span style="font-size:10px;color:#444;margin-left:8px;">/ agent-testing-v1</span>
+    </div>
+    <div class="top-bar-center">
+      <span id="agent-badge" style="font-size:10px;font-weight:600;letter-spacing:0.08em;color:#60a5fa;background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.15);padding:2px 10px;border-radius:3px;text-transform:uppercase;">Advisor</span>
+    </div>
+    <div class="top-bar-right">
       <div class="live-dot"></div>
+      <span style="font-size:10px;color:#444;">Session activa</span>
+      <button onclick="clearSession()" style="font-size:10px;color:#555;background:none;border:1px solid #222;padding:3px 10px;border-radius:3px;cursor:pointer;margin-left:12px;">Nueva sesión</button>
+    </div>
+  </div>
+
+  <!-- Left Panel: User Context -->
+  <div class="left-panel">
+    <div class="panel-block">
+      <div class="panel-label">USER CONTEXT</div>
+      <div class="ctx-row"><span class="ctx-key">User ID</span><span class="ctx-val" id="ctx-userid">—</span></div>
+      <div class="ctx-row"><span class="ctx-key">Condition</span><span class="ctx-val">Hair Loss</span></div>
+      <div class="ctx-row"><span class="ctx-key">Canal</span><span class="ctx-val">Web Simulator</span></div>
+      <div class="ctx-row"><span class="ctx-key">Plan</span><span class="ctx-val" id="ctx-plan">—</span></div>
     </div>
 
+    <div class="panel-block">
+      <div class="panel-label">PROFILE</div>
+      <div id="profile-tags" style="display:flex;flex-wrap:wrap;gap:4px;">
+        <span class="tag tag-empty">Detecting...</span>
+      </div>
+    </div>
+
+    <div class="panel-block">
+      <div class="panel-label">FLAGS</div>
+      <div class="flags-list" id="flags-list">
+        <span style="font-size:10px;color:#333;font-style:italic;">No active flags</span>
+      </div>
+    </div>
+
+    <div class="panel-block">
+      <div class="panel-label">INTAKE PROGRESS</div>
+      <div style="background:#161616;border-radius:3px;height:3px;overflow:hidden;margin-bottom:6px;">
+        <div id="intake-bar" style="height:100%;width:0%;background:#185FA5;transition:width 0.4s;border-radius:3px;"></div>
+      </div>
+      <div id="intake-label" data-progress="0" style="font-size:10px;color:#444;">Not started</div>
+    </div>
+
+    <div class="panel-block">
+      <div class="panel-label">SYSTEM STATUS</div>
+      <div class="ctx-row"><span class="ctx-key">Airtable</span><span class="ctx-val status-ok" id="status-airtable">Connected</span></div>
+      <div class="ctx-row"><span class="ctx-key">Claude API</span><span class="ctx-val status-ok">Active</span></div>
+      <div class="ctx-row"><span class="ctx-key">Human takeover</span><span class="ctx-val" id="status-takeover">Inactive</span></div>
+    </div>
+  </div>
+
+  <!-- Center: Chat -->
+  <div class="chat-area">
     <div class="messages-container" id="messages">
-      <div class="timestamp" id="chat-timestamp"></div>
       <div class="human-takeover-banner" id="human-takeover-banner">
         Un miembro de nuestro equipo te está atendiendo. Por favor espera.
       </div>
     </div>
 
     <div class="input-bar">
-      <input
-        type="text"
-        class="message-input"
-        id="message-input"
-        placeholder="Escribe un mensaje..."
-        autocomplete="off"
-      />
+      <input type="text" class="message-input" id="message-input" placeholder="Type a message..." autocomplete="off" />
       <button class="send-button" id="send-btn" disabled>
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M1 7h12M7 1l6 6-6 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -416,86 +326,26 @@ html, body {
     </div>
   </div>
 
-  <div class="insight-panel" id="insight-panel">
-    <div class="panel-header">
-      <span class="panel-title">Insights del usuario</span>
-      <div class="panel-dot"></div>
-    </div>
-
-    <div class="panel-section">
-      <div class="section-label">Perfil detectado</div>
-      <div class="tag-grid" id="profile-tags">
-        <div class="tag tag-empty">Sin datos aún</div>
+  <!-- Right Panel: OHS + Agent Log -->
+  <div class="right-panel">
+    <div class="panel-block">
+      <div class="panel-label">OMME HEALTH SCORE</div>
+      <div style="text-align:center;padding:16px 0 12px;">
+        <div id="ohs-score" style="font-size:56px;font-weight:700;color:#fff;line-height:1;font-variant-numeric:tabular-nums;">50</div>
+        <div id="ohs-label" style="font-size:9px;letter-spacing:0.12em;color:#444;margin-top:6px;text-transform:uppercase;">STABLE</div>
+      </div>
+      <div style="background:#161616;border-radius:3px;height:3px;overflow:hidden;margin-bottom:14px;">
+        <div id="ohs-bar" style="height:100%;width:50%;background:#185FA5;border-radius:3px;transition:width 0.5s ease,background 0.5s ease;"></div>
+      </div>
+      <div id="ohs-feed" style="display:flex;flex-direction:column;gap:3px;max-height:160px;overflow-y:auto;">
+        <div style="font-size:10px;color:#2a2a2a;font-style:italic;">No events</div>
       </div>
     </div>
 
-    <div class="panel-section">
-      <div class="section-label">Agente activo</div>
-      <div class="meta-row">
-        <span class="meta-key">Agente</span>
-        <span class="meta-val" id="panel-agent">Advisor</span>
-      </div>
-      <div class="meta-row">
-        <span class="meta-key">Health Score</span>
-        <span class="meta-val" id="panel-score">50</span>
-      </div>
-      <div class="meta-row">
-        <span class="meta-key">Canal</span>
-        <span class="meta-val">Web (simulador)</span>
-      </div>
-      <div class="meta-row">
-        <span class="meta-key">Plan</span>
-        <span class="meta-val" id="panel-plan">Sin seleccionar</span>
-      </div>
-    </div>
-
-    <div class="panel-section">
-      <div class="section-label">Progreso del intake</div>
-      <div style="background: rgba(37,99,235,0.08); border-radius: 6px; height: 4px; overflow: hidden; margin-bottom: 6px;">
-        <div id="intake-bar" style="height: 100%; background: #185FA5; width: 0%; transition: width 0.3s; border-radius: 6px;"></div>
-      </div>
-      <div id="intake-label" data-progress="0" style="font-size: 10px; color: rgba(13,13,13,0.35);">Sin iniciar</div>
-    </div>
-
-    <!-- Flags activas (señales de alto valor) -->
-    <div class="panel-section">
-      <div class="section-label">Señales activas</div>
-      <div class="flags-list" id="flags-list">
-        <div class="flag-empty">Sin señales aún</div>
-      </div>
-    </div>
-
-    <!-- Omme Health Score -->
-    <div class="panel-section" id="ohs-section">
-      <div class="section-label">Omme Health Score</div>
-
-      <div style="text-align:center; padding:12px 0 8px;">
-        <div id="ohs-score" style="font-size:42px;font-weight:700;color:#0d0d0d;line-height:1;">50</div>
-        <div id="ohs-label" style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(13,13,13,0.35);margin-top:4px;">Stable</div>
-      </div>
-
-      <div style="background:rgba(0,0,0,0.06);border-radius:6px;height:5px;overflow:hidden;margin:4px 0 10px;">
-        <div id="ohs-bar" style="height:100%;width:50%;background:#185FA5;border-radius:6px;transition:width 0.5s ease,background 0.5s ease;"></div>
-      </div>
-
-      <div id="ohs-feed" style="display:flex;flex-direction:column;gap:4px;max-height:130px;overflow-y:auto;">
-        <div style="font-size:10px;color:rgba(13,13,13,0.25);font-style:italic;">No events yet</div>
-      </div>
-    </div>
-
-    <div class="panel-section">
-      <div class="section-label">Estado del sistema</div>
-      <div class="meta-row">
-        <span class="meta-key">Airtable</span>
-        <span class="meta-val status-ok" id="status-airtable">Conectado</span>
-      </div>
-      <div class="meta-row">
-        <span class="meta-key">Claude API</span>
-        <span class="meta-val status-ok" id="status-claude">Activo</span>
-      </div>
-      <div class="meta-row">
-        <span class="meta-key">Human takeover</span>
-        <span class="meta-val" id="status-takeover">Inactivo</span>
+    <div class="panel-block">
+      <div class="panel-label">AGENT LOG</div>
+      <div id="agent-log" style="display:flex;flex-direction:column;gap:4px;max-height:260px;overflow-y:auto;font-size:10px;font-family:inherit;">
+        <span style="color:#2a2a2a;font-style:italic;">Waiting for events...</span>
       </div>
     </div>
   </div>
@@ -527,12 +377,14 @@ const messagesEl  = document.getElementById('messages');
 const inputEl     = document.getElementById('message-input');
 const sendBtn     = document.getElementById('send-btn');
 const agentBadge  = document.getElementById('agent-badge');
-const tsEl        = document.getElementById('chat-timestamp');
 const bannerEl    = document.getElementById('human-takeover-banner');
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
-tsEl.textContent = 'Hoy · ' + new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
 updateAgentBadge(currentAgent);
+if (userId) {
+  const el = document.getElementById('ctx-userid');
+  if (el) el.textContent = userId.substring(0, 18) + '…';
+}
 
 inputEl.addEventListener('input', () => {
   sendBtn.disabled = !inputEl.value.trim() || isLoading || humanTakeoverActive;
@@ -546,6 +398,12 @@ function scrollToBottom() {
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
+function clearSession() {
+  localStorage.removeItem('omme_user_id');
+  localStorage.removeItem('omme_current_agent');
+  location.reload();
+}
+
 function updateAgentBadge(agent) {
   currentAgent = agent;
   localStorage.setItem('omme_current_agent', agent);
@@ -557,28 +415,20 @@ function addMessage(text, role) {
   div.className = role === 'user' ? 'bubble-user' : 'bubble-agent';
 
   if (role === 'assistant') {
-    // 1. Forzar salto de línea antes de opciones numeradas que vengan pegadas
     let processed = text.replace(/([.!?:;])\s*(\d+)\.\s/g, '$1\n$2. ');
-    // 2. También antes de letras con paréntesis: a) b) c)
     processed = processed.replace(/([.!?:;])\s*([a-d])\)\s/g, '$1\n$2) ');
-
-    // 3. Dividir por saltos de línea reales (Claude los manda con \n)
     const lines = processed.split('\n').map(l => l.trim()).filter(Boolean);
 
     let html = '';
     lines.forEach(line => {
       if (/^\d+[.)]\s/.test(line) || /^[a-d]\)\s/.test(line)) {
-        // Opción numerada o con letra
-        html += `<div style="padding:4px 0 4px 10px;border-left:2px solid rgba(37,99,235,0.20);margin:4px 0;font-size:12px;color:#1e3a5f;line-height:1.5;">${escapeHtml(line)}</div>`;
+        html += `<div style="padding:4px 0 4px 10px;border-left:2px solid #243460;margin:4px 0;font-size:12px;color:#aaa;line-height:1.5;">${escapeHtml(line)}</div>`;
       } else if (line.startsWith('- ') || line.startsWith('• ')) {
-        // Bullet point
-        html += `<div style="padding:2px 0 2px 10px;margin:2px 0;font-size:12px;color:#1e3a5f;line-height:1.5;">${escapeHtml(line)}</div>`;
+        html += `<div style="padding:2px 0 2px 10px;margin:2px 0;font-size:12px;color:#aaa;line-height:1.5;">${escapeHtml(line)}</div>`;
       } else {
-        // Texto normal — cada párrafo en su propio bloque
-        html += `<div style="margin-bottom:6px;font-size:12.5px;line-height:1.56;color:#1e3a5f;">${escapeHtml(line)}</div>`;
+        html += `<div style="margin-bottom:6px;font-size:13px;line-height:1.6;color:#d4d4d4;">${escapeHtml(line)}</div>`;
       }
     });
-
     div.innerHTML = html || escapeHtml(text);
   } else {
     div.textContent = text;
@@ -620,7 +470,7 @@ function disableInputForHumanTakeover() {
   humanTakeoverActive = true;
   inputEl.disabled = true;
   sendBtn.disabled = true;
-  bannerEl.style.display = 'block';
+  if (bannerEl) bannerEl.style.display = 'block';
 }
 
 // ─── Intake Progress ──────────────────────────────────────────────────────────
@@ -631,17 +481,16 @@ function updateIntakeProgress(newProgress, completed) {
 
   const current = parseInt(label.dataset.progress || '0');
   const progress = Math.max(current, newProgress || 0);
-
   label.dataset.progress = progress;
 
   if (completed) {
     bar.style.width = '100%';
     bar.style.background = '#22C55E';
-    label.textContent = 'Evaluación completa';
-    label.style.color = '#15803d';
+    label.textContent = 'Complete';
+    label.style.color = '#22C55E';
   } else if (progress > 0) {
     bar.style.width = Math.round((progress / 16) * 100) + '%';
-    label.textContent = 'Pregunta ' + progress + ' de 16';
+    label.textContent = 'Q' + progress + ' of 16';
   }
 }
 
@@ -660,20 +509,20 @@ function updateOHS(delta, reason) {
 
   if (ohsScore >= 75) {
     bar.style.background = '#22C55E';
-    label.textContent = 'Promoter';
-    label.style.color = '#15803d';
+    label.textContent = 'PROMOTER';
+    label.style.color = '#22C55E';
   } else if (ohsScore >= 50) {
     bar.style.background = '#185FA5';
-    label.textContent = 'Stable';
-    label.style.color = 'rgba(13,13,13,0.35)';
+    label.textContent = 'STABLE';
+    label.style.color = '#444';
   } else if (ohsScore >= 30) {
     bar.style.background = '#f97316';
-    label.textContent = 'At Risk';
-    label.style.color = '#c2410c';
+    label.textContent = 'AT RISK';
+    label.style.color = '#f97316';
   } else {
     bar.style.background = '#dc2626';
-    label.textContent = 'Critical';
-    label.style.color = '#991b1b';
+    label.textContent = 'CRITICAL';
+    label.style.color = '#dc2626';
   }
 
   const feed = document.getElementById('ohs-feed');
@@ -682,29 +531,48 @@ function updateOHS(delta, reason) {
   if (empty) empty.remove();
 
   const item = document.createElement('div');
-  item.style.cssText = 'display:flex;justify-content:space-between;align-items:center;font-size:10.5px;padding:3px 0;border-bottom:1px solid rgba(0,0,0,0.04);';
+  item.style.cssText = 'display:flex;justify-content:space-between;align-items:center;font-size:10px;padding:3px 0;border-bottom:1px solid #111;';
   const sign = delta > 0 ? '+' : '';
-  const color = delta > 0 ? '#15803d' : '#dc2626';
-  item.innerHTML = `<span style="color:rgba(13,13,13,0.45);flex:1;">${reason}</span><span style="font-weight:700;color:${color};margin-left:8px;">${sign}${delta}</span>`;
+  const color = delta > 0 ? '#22C55E' : '#f87171';
+  item.innerHTML = `<span style="color:#444;flex:1;">${reason}</span><span style="font-weight:700;color:${color};margin-left:8px;">${sign}${delta}</span>`;
   feed.insertBefore(item, feed.firstChild);
 
   const items = feed.querySelectorAll('div[style*="border-bottom"]');
   if (items.length > 6) items[items.length - 1].remove();
 }
 
+// ─── Agent Log ────────────────────────────────────────────────────────────────
+function addAgentLog(agent, event, value) {
+  const log = document.getElementById('agent-log');
+  if (!log) return;
+  const empty = log.querySelector('span[style*="italic"]');
+  if (empty) empty.remove();
+
+  const line = document.createElement('div');
+  line.style.cssText = 'display:flex;gap:8px;padding:3px 0;border-bottom:1px solid #111;align-items:baseline;';
+  const time = new Date().toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  line.innerHTML = `
+    <span style="color:#2a2a2a;flex-shrink:0;">${time}</span>
+    <span style="color:#444;flex-shrink:0;">[${agent}]</span>
+    <span style="color:#666;">${event}</span>
+    ${value ? `<span style="color:#888;margin-left:auto;">${value}</span>` : ''}`;
+  log.insertBefore(line, log.firstChild);
+  const lines = log.querySelectorAll('div');
+  if (lines.length > 20) lines[lines.length - 1].remove();
+}
+
 // ─── Flags activas ────────────────────────────────────────────────────────────
 function updateFlags(data) {
   const flagsList = document.getElementById('flags-list');
   if (!flagsList) return;
-
-  const existingEmpty = flagsList.querySelector('.flag-empty');
+  const existingEmpty = flagsList.querySelector('span[style*="italic"]');
 
   if (data.exploringCompetitors && !document.getElementById('flag-competitors')) {
     if (existingEmpty) existingEmpty.remove();
     const flag = document.createElement('div');
     flag.id = 'flag-competitors';
     flag.className = 'flag-item flag-competitors';
-    flag.innerHTML = '<div class="flag-dot"></div>Explorando competidores';
+    flag.innerHTML = '<div class="flag-dot"></div>Exploring competitors';
     flagsList.appendChild(flag);
   }
 
@@ -713,91 +581,77 @@ function updateFlags(data) {
     const flag = document.createElement('div');
     flag.id = 'flag-treatments';
     flag.className = 'flag-item flag-treatments';
-    flag.innerHTML = '<div class="flag-dot"></div>Usó tratamientos previos';
+    flag.innerHTML = '<div class="flag-dot"></div>Previous treatments';
     flagsList.appendChild(flag);
   }
 }
 
 // ─── Insight Panel ────────────────────────────────────────────────────────────
 function updateInsightPanel(data, userMessage) {
-  // Agente activo
-  if (data.currentAgent) {
-    const el = document.getElementById('panel-agent');
-    if (el) el.textContent = AGENT_NAMES[data.currentAgent] || data.currentAgent;
-    updateAgentBadge(data.currentAgent);
-  }
+  if (data.currentAgent) updateAgentBadge(data.currentAgent);
 
-  // Health score
-  if (data.healthScore) {
-    const el = document.getElementById('panel-score');
-    if (el) el.textContent = data.healthScore;
-  }
-
-  // Human takeover
   if (data.humanTakeover) {
     const el = document.getElementById('status-takeover');
-    if (el) { el.textContent = 'Activo'; el.style.color = '#dc2626'; }
+    if (el) { el.textContent = 'Active'; el.style.color = '#f87171'; }
   }
 
-  // Perfil detectado por Claude (viene del backend)
   if (data.detectedProfile && data.detectedProfile !== 'null') {
     const tagLabels = {
-      'resistente_precio': 'Resistente precio',
-      'ansioso':           'Ansioso',
-      'esceptico':         'Escéptico',
-      'curioso':           'Curioso',
-      'urgente':           'Urgente',
-      'directo':           'Directo'
+      'resistente_precio': 'Price resist.',
+      'ansioso': 'Anxious',
+      'esceptico': 'Skeptic',
+      'curioso': 'Curious',
+      'urgente': 'Urgent',
+      'directo': 'Direct'
     };
     const tagClasses = {
-      'resistente_precio': 'tag-precio',
-      'ansioso':           'tag-ansioso',
-      'esceptico':         'tag-esceptico',
-      'curioso':           'tag-curioso',
-      'urgente':           'tag-urgente',
-      'directo':           'tag-directo'
+      'resistente_precio': 'tag-precio', 'ansioso': 'tag-ansioso',
+      'esceptico': 'tag-esceptico', 'curioso': 'tag-curioso',
+      'urgente': 'tag-urgente', 'directo': 'tag-directo'
     };
     const p = data.detectedProfile;
     const el = document.getElementById('profile-tags');
-    if (el) el.innerHTML = `<div class="tag ${tagClasses[p] || 'tag-empty'}">${tagLabels[p] || p}</div>`;
+    if (el) el.innerHTML = `<span class="tag ${tagClasses[p] || 'tag-empty'}">${tagLabels[p] || p}</span>`;
   }
 
-  // Progreso del intake
   if (data.intakeProgress || data.intakeCompleted) {
     updateIntakeProgress(data.intakeProgress, data.intakeCompleted);
   }
 
-  // Flags activas
   updateFlags(data);
 
-  // Plan seleccionado
   if (data.planSeleccionado) {
-    const planEl = document.getElementById('panel-plan');
+    const planEl = document.getElementById('ctx-plan');
     if (planEl) {
-      planEl.textContent = data.planSeleccionado === '6_meses' ? '6 meses' : '12 meses';
-      planEl.style.color = '#6d28d9';
+      planEl.textContent = data.planSeleccionado === '6_meses' ? '6 months' : '12 months';
+      planEl.style.color = '#a78bfa';
     }
   }
 
-  // OHS
   if (data.scoreDelta && data.scoreReason) {
     updateOHS(data.scoreDelta, data.scoreReason);
   }
+
+  // Agent log
+  addAgentLog(
+    data.currentAgent || 'agent_01',
+    data.detectedProfile ? `profile → ${data.detectedProfile}` : 'response',
+    data.scoreDelta ? `OHS ${data.scoreDelta > 0 ? '+' : ''}${data.scoreDelta}` : null
+  );
 }
 
 // ─── Photo simulation ─────────────────────────────────────────────────────────
 function showPhotoSimulationButton() {
   if (document.getElementById('photo-sim-btn')) return;
-
   const btn = document.createElement('div');
   btn.id = 'photo-sim-btn';
-  btn.style.cssText = 'align-self: flex-start; margin: 4px 0; display: flex; flex-direction: column; gap: 8px; max-width: 82%;';
+  btn.style.cssText = 'align-self:flex-start;margin:4px 0;display:flex;flex-direction:column;gap:8px;max-width:72%;';
   btn.innerHTML = `
-    <div style="background: linear-gradient(135deg, #EFF6FF, #DBEAFE); border-radius: 14px; border-top-left-radius: 3px; padding: 12px 14px; font-size: 12.5px; color: #1e3a5f; line-height: 1.5; box-shadow: 0 1px 6px rgba(37,99,235,0.08);">
-      📎 6 fotos requeridas para completar tu evaluación
+    <div style="background:#111;border:1px solid #1e1e1e;border-radius:10px;border-top-left-radius:2px;padding:12px 14px;font-size:12px;color:#aaa;line-height:1.5;">
+      📎 6 photos required to complete evaluation
     </div>
-    <button onclick="simulatePhotoUpload()" style="background: #0d0d0d; color: white; border: none; border-radius: 10px; padding: 10px 16px; font-size: 12px; font-weight: 600; cursor: pointer; letter-spacing: 0.02em; text-align: left; transition: opacity 0.15s;">
-      Simulación de envío de fotos →
+    <button onclick="simulatePhotoUpload()" style="background:#1e1e1e;color:#aaa;border:1px solid #2a2a2a;border-radius:6px;padding:8px 14px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:background 0.15s;">
+      Simulate photo upload →
     </button>`;
   messagesEl.appendChild(btn);
   scrollToBottom();
@@ -806,11 +660,9 @@ function showPhotoSimulationButton() {
 function simulatePhotoUpload() {
   const btn = document.getElementById('photo-sim-btn');
   if (btn) btn.remove();
-
   const photoText = 'He enviado las 6 fotos de mi cabello';
   addMessage(photoText, 'user');
   history.push({ role: 'user', content: photoText });
-
   sendBtn.disabled = true;
   isLoading = true;
   setTimeout(async () => {
@@ -824,18 +676,16 @@ function simulatePhotoUpload() {
 function showPurchaseSimulationButton(plan) {
   if (purchaseButtonShown) return;
   purchaseButtonShown = true;
-
-  const planLabel = plan === '12_meses' ? '12 meses — $8,699 MXN' : '6 meses — $4,799 MXN';
-
+  const planLabel = plan === '12_meses' ? '12 months — $8,699 MXN' : '6 months — $4,799 MXN';
   const btn = document.createElement('div');
   btn.id = 'purchase-sim-btn';
-  btn.style.cssText = 'align-self: flex-start; margin: 4px 0; display: flex; flex-direction: column; gap: 8px; max-width: 82%;';
+  btn.style.cssText = 'align-self:flex-start;margin:4px 0;display:flex;flex-direction:column;gap:8px;max-width:72%;';
   btn.innerHTML = `
-    <div style="background: linear-gradient(135deg, #EFF6FF, #DBEAFE); border-radius: 14px; border-top-left-radius: 3px; padding: 12px 14px; font-size: 12.5px; color: #1e3a5f; line-height: 1.5; box-shadow: 0 1px 6px rgba(37,99,235,0.08);">
-      🛒 Plan seleccionado: ${planLabel}
+    <div style="background:#111;border:1px solid #1e1e1e;border-radius:10px;border-top-left-radius:2px;padding:12px 14px;font-size:12px;color:#aaa;line-height:1.5;">
+      🛒 Plan selected: ${planLabel}
     </div>
-    <button onclick="simulatePurchase()" style="background: #15803d; color: white; border: none; border-radius: 10px; padding: 10px 16px; font-size: 12px; font-weight: 600; cursor: pointer; letter-spacing: 0.02em; text-align: left; transition: opacity 0.15s;">
-      Simulación de compra completada →
+    <button onclick="simulatePurchase()" style="background:rgba(34,197,94,0.1);color:#22C55E;border:1px solid rgba(34,197,94,0.2);border-radius:6px;padding:8px 14px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:background 0.15s;">
+      Simulate purchase →
     </button>`;
   messagesEl.appendChild(btn);
   scrollToBottom();
@@ -844,11 +694,9 @@ function showPurchaseSimulationButton(plan) {
 function simulatePurchase() {
   const btn = document.getElementById('purchase-sim-btn');
   if (btn) btn.remove();
-
   const purchaseText = 'Completé la compra';
   addMessage(purchaseText, 'user');
   history.push({ role: 'user', content: purchaseText });
-
   sendBtn.disabled = true;
   isLoading = true;
   setTimeout(async () => {
@@ -858,7 +706,7 @@ function simulatePurchase() {
   }, 500);
 }
 
-// ─── API dispatch (shared by send() and simulatePhotoUpload()) ────────────────
+// ─── API dispatch ─────────────────────────────────────────────────────────────
 async function dispatchToAPI(text) {
   showTyping();
   try {
@@ -873,16 +721,15 @@ async function dispatchToAPI(text) {
 
     if (data.error) throw new Error(data.error.message);
 
-    // Persistir userId si el backend lo generó
     if (data.userId && data.userId !== userId) {
       userId = data.userId;
       localStorage.setItem('omme_user_id', userId);
+      const el = document.getElementById('ctx-userid');
+      if (el) el.textContent = userId.substring(0, 18) + '…';
     }
 
-    // Actualizar badge del agente
     if (data.currentAgent) updateAgentBadge(data.currentAgent);
 
-    // Human takeover
     if (data.humanTakeover) {
       const msg = data.message || 'Un miembro de nuestro equipo te está atendiendo. Por favor espera.';
       addMessage(msg, 'agent');
@@ -895,22 +742,19 @@ async function dispatchToAPI(text) {
     history.push({ role: 'assistant', content: reply });
     addMessage(reply, 'agent');
 
-    // Botón de fotos si agent_02 lo solicitó (solo una vez por sesión)
     if (data.fotosSolicitadas && !photosButtonShown) {
       photosButtonShown = true;
       showPhotoSimulationButton();
     }
 
-    // Botón de simulación de compra cuando el agente envía el link
     if (data.linkEnviado && data.planSeleccionado && !purchaseButtonShown) {
       showPurchaseSimulationButton(data.planSeleccionado);
     }
 
-    // Banner de compra confirmada
     if (data.compraConfirmada) {
       const banner = document.createElement('div');
-      banner.style.cssText = 'align-self:center;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.20);border-radius:10px;padding:10px 16px;font-size:11.5px;color:#15803d;text-align:center;margin:8px 0;';
-      banner.textContent = '✓ Compra completada — bienvenido a Omme';
+      banner.style.cssText = 'align-self:center;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.15);border-radius:6px;padding:10px 16px;font-size:11px;color:#22C55E;text-align:center;margin:8px 0;font-family:inherit;';
+      banner.textContent = '✓ Purchase completed — welcome to Omme';
       messagesEl.appendChild(banner);
       scrollToBottom();
     }
@@ -919,7 +763,7 @@ async function dispatchToAPI(text) {
 
   } catch (err) {
     hideTyping();
-    showError('Error: ' + (err.message || 'No se pudo conectar con el agente.'));
+    showError('Error: ' + (err.message || 'Could not connect to agent.'));
     history.pop();
   }
 }
