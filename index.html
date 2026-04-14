@@ -421,7 +421,7 @@ html, body {
       <div style="background: rgba(37,99,235,0.08); border-radius: 6px; height: 4px; overflow: hidden; margin-bottom: 6px;">
         <div id="intake-bar" style="height: 100%; background: #185FA5; width: 0%; transition: width 0.3s; border-radius: 6px;"></div>
       </div>
-      <div id="intake-label" style="font-size: 10px; color: rgba(13,13,13,0.35);">Sin iniciar</div>
+      <div id="intake-label" data-progress="0" style="font-size: 10px; color: rgba(13,13,13,0.35);">Sin iniciar</div>
     </div>
 
     <div class="panel-section">
@@ -505,19 +505,34 @@ function addMessage(text, role) {
   div.className = role === 'user' ? 'bubble-user' : 'bubble-agent';
 
   if (role === 'assistant') {
-    const formatted = text
-      .replace(/(\d+\.\s)/g, '\n$1')
-      .trim();
-    div.innerHTML = formatted
-      .split('\n')
-      .map(line => {
-        const trimmed = line.trim();
-        if (/^\d+\./.test(trimmed)) {
-          return `<div style="padding-left:10px;margin-top:5px;opacity:0.85">${trimmed}</div>`;
+    const hasOptions = /\d+\.\s/.test(text);
+
+    if (hasOptions) {
+      const parts = text.split(/(?=\b\d+\.\s)/);
+      let html = '';
+
+      parts.forEach((part) => {
+        const trimmed = part.trim();
+        if (!trimmed) return;
+
+        if (/^\d+\.\s/.test(trimmed)) {
+          html += `<div style="
+            padding: 4px 0 4px 8px;
+            border-left: 2px solid rgba(37,99,235,0.3);
+            margin: 4px 0;
+            font-size: 12px;
+            color: #2c5282;
+            line-height: 1.5;
+          ">${trimmed}</div>`;
+        } else {
+          html += `<div style="margin-bottom: 8px; line-height: 1.56;">${trimmed}</div>`;
         }
-        return `<span>${trimmed}</span>`;
-      })
-      .join('');
+      });
+
+      div.innerHTML = html;
+    } else {
+      div.textContent = text;
+    }
   } else {
     div.textContent = text;
   }
@@ -600,19 +615,28 @@ function updateInsightPanel(data, userMessage) {
     if (el) el.innerHTML = `<div class="tag ${tagClasses[p] || 'tag-empty'}">${tagLabels[p] || p}</div>`;
   }
 
-  // Progreso del intake
+  // Progreso del intake (nunca puede bajar)
   if (data.intakeProgress > 0) {
-    const pct = Math.round((data.intakeProgress / 16) * 100);
-    const bar = document.getElementById('intake-bar');
     const label = document.getElementById('intake-label');
+    const bar = document.getElementById('intake-bar');
+    const currentProgress = parseInt(label?.dataset?.progress || '0');
+    const newProgress = Math.max(currentProgress, data.intakeProgress);
+
+    const pct = Math.round((newProgress / 16) * 100);
     if (bar) bar.style.width = pct + '%';
-    if (label) label.textContent = `Pregunta ${data.intakeProgress} de 16`;
+    if (label) {
+      label.textContent = `Pregunta ${newProgress} de 16`;
+      label.dataset.progress = newProgress;
+    }
   }
   if (data.intakeCompleted) {
     const bar = document.getElementById('intake-bar');
     const label = document.getElementById('intake-label');
     if (bar) { bar.style.width = '100%'; bar.style.background = '#22C55E'; }
-    if (label) label.textContent = 'Evaluación completa ✓';
+    if (label) {
+      label.textContent = 'Evaluación completa ✓';
+      label.dataset.progress = '16';
+    }
   }
 
   // Explorando competidores
