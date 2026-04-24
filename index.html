@@ -242,6 +242,58 @@ html, body {
   border-bottom: 1px solid #f0f0ee;
   color: #888;
 }
+
+/* ─── Month Simulator ──────────────────────────────────────────────────────── */
+.month-grid {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.month-btn {
+  width: 28px; height: 28px;
+  border: 1px solid #D8DAD6;
+  border-radius: 6px;
+  background: #F5F4F0;
+  color: #0D0D0D;
+  font-size: 11px;
+  font-family: inherit;
+  font-weight: 400;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.08s ease;
+}
+.month-btn:hover { transform: translateY(-1px); }
+.month-btn.consult { background: #C8F135; }
+.month-btn.churn   { background: #FFE4B5; }
+.month-btn.active {
+  background: #0D0D0D;
+  color: #fff;
+  border: 2px solid #0D0D0D;
+  font-weight: 600;
+}
+.month-label {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #6B6B6B;
+  line-height: 1.4;
+}
+.month-label strong { color: #0D0D0D; font-weight: 600; }
+.month-label .agent-hint { font-size: 10px; opacity: 0.6; }
+
+/* ─── System Note (pill) ──────────────────────────────────────────────────── */
+.bubble-system-note {
+  align-self: center;
+  margin: 12px 0;
+  padding: 6px 14px;
+  background: rgba(200,241,53,0.12);
+  border: 1px solid rgba(200,241,53,0.3);
+  border-radius: 999px;
+  font-size: 11px;
+  color: #5c7018;
+  text-align: center;
+  max-width: 80%;
+  line-height: 1.4;
+}
 </style>
 </head>
 <body>
@@ -298,6 +350,12 @@ html, body {
         <div id="intake-bar" style="height:100%;width:0%;background:#185FA5;transition:width 0.4s;border-radius:3px;"></div>
       </div>
       <div id="intake-label" data-progress="0" style="font-size:10px;color:#aaa;">Not started</div>
+    </div>
+
+    <div class="panel-block" id="month-simulator-block" style="display:none;">
+      <div class="panel-label">MONTH SIMULATOR</div>
+      <div class="month-grid" id="month-grid"></div>
+      <div class="month-label" id="month-label" style="display:none;"></div>
     </div>
 
     <div class="panel-block">
@@ -372,6 +430,41 @@ const AGENT_NAMES = {
   agent_07: 'Churn Defense'
 };
 
+// Agents that unlock the Month Simulator (post-purchase lifecycle)
+const LIFECYCLE_AGENTS = new Set(['agent_04', 'agent_05', 'agent_06', 'agent_07']);
+
+let simulatedMonth = null;
+
+const MILESTONES = {
+  1:  { label: 'Check-in',                  agent: 'agent_05', type: 'checkin' },
+  2:  { label: 'Check-in',                  agent: 'agent_05', type: 'checkin' },
+  3:  { label: '🩺 Consulta dermatólogo',   agent: 'agent_05', type: 'consult' },
+  4:  { label: 'Check-in · Churn watch',    agent: 'agent_05', type: 'churn_watch' },
+  5:  { label: 'Check-in · Churn watch',    agent: 'agent_07', type: 'churn_watch' },
+  6:  { label: '🩺 Consulta dermatólogo',   agent: 'agent_06', type: 'consult' },
+  7:  { label: 'Check-in',                  agent: 'agent_05', type: 'checkin' },
+  8:  { label: 'Check-in',                  agent: 'agent_05', type: 'checkin' },
+  9:  { label: 'Check-in',                  agent: 'agent_05', type: 'checkin' },
+  10: { label: 'Renovación · Churn watch',  agent: 'agent_07', type: 'renewal' },
+  11: { label: 'Renovación · Churn watch',  agent: 'agent_07', type: 'renewal' },
+  12: { label: '🩺 Consulta dermatólogo',   agent: 'agent_06', type: 'consult' },
+};
+
+const MONTH_CONTEXTS = {
+  1:  "Mes 1 · Safety Gate. El usuario lleva ~30 días en protocolo. Preguntar sobre adherencia, tolerabilidad, y si ha notado shedding. Tranquilizar si hay shedding — es normal en semanas 2-8.",
+  2:  "Mes 2 · Check-in. Preguntar sobre efectos secundarios, adherencia y estado de ánimo. Reforzar que el shedding puede continuar. Aún no hay resultados visibles esperados.",
+  3:  "Mes 3 · Consulta dermatólogo + Estabilización. Primera señal esperada: reducción de caída. Solicitar fotos bajo las mismas condiciones. Confirmar adherencia >80%. Agendar evaluación con dermatólogo.",
+  4:  "Mes 4 · Churn Watch activado. Comenzar a explorar cómo se siente el usuario con el progreso. Detectar señales de duda o intención de no renovar. Alimentar señales al Agent 07 si OHS baja.",
+  5:  "Mes 5 · Churn Watch crítico. Preparar conversación de renovación. NPS formal. Si OHS < 40, activar Agent 07 inmediatamente.",
+  6:  "Mes 6 · Consulta + evaluación real. Comparar fotos mes 0 vs mes 6. Primer momento de evaluación clínica formal. Algunos ven resultados visibles, otros aún en proceso.",
+  7:  "Mes 7 · Check-in post-evaluación. Confirmar que el usuario entendió los resultados del mes 6. Reforzar continuidad.",
+  8:  "Mes 8 · Check-in. Adherencia y tolerabilidad. Resultados más visibles esperados.",
+  9:  "Mes 9 · Check-in. Preparar al usuario para la conversación de renovación en mes 10-11.",
+  10: "Mes 10 · Renovación. Iniciar conversación de renovación. El usuario completará el ciclo en mes 12. Presentar opciones de continuidad.",
+  11: "Mes 11 · Renovación crítica. Si no renovó en mes 10, esta es la última ventana antes del fin del plan.",
+  12: "Mes 12 · Consulta dermatólogo + Consolidación. Evaluación anual completa. Plan de mantenimiento. La AGA no se cura, se controla — suspender revierte el progreso.",
+};
+
 // ─── DOM ──────────────────────────────────────────────────────────────────────
 const messagesEl  = document.getElementById('messages');
 const inputEl     = document.getElementById('message-input');
@@ -408,6 +501,74 @@ function updateAgentBadge(agent) {
   currentAgent = agent;
   localStorage.setItem('omme_current_agent', agent);
   if (agentBadge) agentBadge.textContent = AGENT_NAMES[agent] || agent;
+  updateMonthSimulatorVisibility();
+}
+
+// ─── Month Simulator ─────────────────────────────────────────────────────────
+function renderMonthSimulator() {
+  const grid = document.getElementById('month-grid');
+  if (!grid || grid.childElementCount > 0) return;
+  for (let m = 1; m <= 12; m++) {
+    const ms = MILESTONES[m];
+    const btn = document.createElement('button');
+    btn.className = 'month-btn';
+    btn.dataset.month = m;
+    if (ms.type === 'consult') btn.classList.add('consult');
+    else if (ms.type === 'churn_watch' || ms.type === 'renewal') btn.classList.add('churn');
+    btn.textContent = m;
+    btn.title = `${m} · ${ms.label}`;
+    btn.addEventListener('click', () => setSimulatedMonth(m));
+    grid.appendChild(btn);
+  }
+}
+
+function updateMonthSimulatorVisibility() {
+  const block = document.getElementById('month-simulator-block');
+  if (!block) return;
+  if (LIFECYCLE_AGENTS.has(currentAgent)) {
+    block.style.display = '';
+    renderMonthSimulator();
+  } else {
+    block.style.display = 'none';
+  }
+}
+
+function setSimulatedMonth(month) {
+  const ms = MILESTONES[month];
+  if (!ms) return;
+  simulatedMonth = month;
+
+  // Highlight active button
+  document.querySelectorAll('.month-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.month, 10) === month);
+  });
+
+  // Update month label
+  const labelEl = document.getElementById('month-label');
+  if (labelEl) {
+    labelEl.style.display = '';
+    labelEl.innerHTML =
+      `<strong>Mes ${month}</strong> · ${ms.label}<br>` +
+      `<span class="agent-hint">${ms.agent}</span>`;
+  }
+
+  // Switch active agent per milestone
+  updateAgentBadge(ms.agent);
+
+  // Reset conversation and show the simulation note as a pill
+  history = [];
+  resetChatMessages();
+  const context = `[SIMULACIÓN MES ${month}] ${MONTH_CONTEXTS[month]}`;
+  addMessage(context, 'system');
+}
+
+function resetChatMessages() {
+  // Clear all bubbles but preserve the human-takeover banner
+  const banner = document.getElementById('human-takeover-banner');
+  messagesEl.innerHTML = '';
+  if (banner) messagesEl.appendChild(banner);
+  photosButtonShown = false;
+  purchaseButtonShown = false;
 }
 
 function cleanAgentText(text) {
@@ -461,11 +622,15 @@ function renderMessageContent(text) {
 
 function addMessage(text, role) {
   const div = document.createElement('div');
-  div.className = role === 'user' ? 'bubble-user' : 'bubble-agent';
 
-  if (role === 'user') {
+  if (role === 'system') {
+    div.className = 'bubble-system-note';
+    div.textContent = text;
+  } else if (role === 'user') {
+    div.className = 'bubble-user';
     div.textContent = text;
   } else {
+    div.className = 'bubble-agent';
     div.innerHTML = renderMessageContent(text);
   }
 
