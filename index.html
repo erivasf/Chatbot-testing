@@ -4,8 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <title>Omme — Agent Testing</title>
 <style>
+:root {
+  --omme-ink: #0D0D0D;
+  --omme-cream: #F2F2F0;
+  --omme-muted: #888780;
+  --omme-border: #E0DED8;
+  --omme-lime: #C8F135;
+  --omme-lime-text: #2D4A00;
+  --omme-card: #FFFFFF;
+  --omme-card-alt: #F7F6F3;
+  --omme-amber: #FFE4B5;
+  --omme-amber-text: #7A5000;
+  --omme-critical: #8B0000;
+  --omme-stable: #2D6A00;
+}
+
 @keyframes spin  { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
 @keyframes bop   { 0%,60%,100% { transform: translateY(0); opacity: .3; }
@@ -17,9 +35,11 @@ html, body {
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  background: #f8f8f7;
-  font-family: 'Berkeley Mono', 'Fira Code', 'Geist Mono', 'SF Mono', monospace;
-  color: #1a1a1a;
+  background: var(--omme-cream);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--omme-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .app-layout {
@@ -30,20 +50,51 @@ html, body {
   width: 100vw;
 }
 
-/* ─── Top Bar ──────────────────────────────────────────────────────────────── */
+/* ─── Top Bar (dark) ───────────────────────────────────────────────────────── */
 .top-bar {
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  background: #fff;
-  border-bottom: 1px solid #e5e5e4;
+  background: var(--omme-ink);
+  color: #fff;
   height: 48px;
   position: relative;
 }
 .top-bar-left, .top-bar-right { display: flex; align-items: center; gap: 10px; }
 .top-bar-center { position: absolute; left: 50%; transform: translateX(-50%); }
+
+.brand-mark {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+.brand-sub {
+  font-size: 10px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.4);
+  margin-left: 8px;
+  letter-spacing: -0.01em;
+}
+.session-label {
+  font-size: 10px;
+  color: rgba(255,255,255,0.55);
+}
+.session-btn {
+  font-size: 10px;
+  font-family: inherit;
+  color: rgba(255,255,255,0.75);
+  background: rgba(255,255,255,0.06);
+  border: 0.5px solid rgba(255,255,255,0.15);
+  padding: 4px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  margin-left: 12px;
+  transition: background 0.15s;
+}
+.session-btn:hover { background: rgba(255,255,255,0.14); }
 
 .sphere-btn {
   border-radius: 50%;
@@ -71,71 +122,91 @@ html, body {
   background: radial-gradient(ellipse 40% 30% at 35% 30%, rgba(255,255,255,0.15) 0%, transparent 50%);
 }
 
-.live-dot {
-  width: 5px; height: 5px; border-radius: 50%;
-  background: #22C55E;
-  box-shadow: 0 0 5px rgba(34,197,94,0.6);
+/* Agent badge (pill in top bar) */
+.agent-badge {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--omme-muted);
+  background: var(--omme-card-alt);
+  border: 0.5px solid var(--omme-border);
+  padding: 3px 12px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  font-family: inherit;
 }
 
-/* ─── Left Panel ───────────────────────────────────────────────────────────── */
+.live-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--omme-lime);
+  box-shadow: 0 0 6px rgba(200,241,53,0.55);
+}
+
+/* ─── Side Panels ──────────────────────────────────────────────────────────── */
 .left-panel {
-  background: #fff;
-  border-right: 1px solid #e5e5e4;
+  background: var(--omme-card);
+  border-right: 0.5px solid var(--omme-border);
+  overflow-y: auto;
+  padding: 16px 0;
+}
+.right-panel {
+  background: var(--omme-card);
+  border-left: 0.5px solid var(--omme-border);
   overflow-y: auto;
   padding: 16px 0;
 }
 .panel-block {
-  padding: 12px 16px;
-  border-bottom: 1px solid #efefed;
+  padding: 14px 18px;
+  border-bottom: 0.5px solid var(--omme-border);
 }
 .panel-label {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  color: #aaa;
-  margin-bottom: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--omme-muted);
+  margin-bottom: 12px;
   text-transform: uppercase;
 }
 .ctx-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
 }
-.ctx-key { font-size: 11px; color: #888; }
-.ctx-val { font-size: 11px; color: #333; font-weight: 500; }
-.status-ok { color: #22c55e !important; }
+.ctx-key { font-size: 12px; color: var(--omme-muted); }
+.ctx-val { font-size: 12px; color: var(--omme-ink); font-weight: 500; }
+.status-ok { color: var(--omme-stable) !important; }
 
-/* ─── Tags (dark mode) ─────────────────────────────────────────────────────── */
+/* ─── Tags ─────────────────────────────────────────────────────────────────── */
 .tag {
-  font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
-  padding: 3px 9px; border-radius: 3px; text-transform: uppercase;
+  font-size: 10px; font-weight: 500; letter-spacing: 0.04em;
+  padding: 3px 10px; border-radius: 999px; text-transform: uppercase;
 }
-.tag-ansioso   { background: rgba(251,146,60,0.10); color: #c2410c; border: 1px solid rgba(251,146,60,0.20); }
-.tag-esceptico { background: rgba(239,68,68,0.08);  color: #b91c1c; border: 1px solid rgba(239,68,68,0.18); }
-.tag-directo   { background: rgba(37,99,235,0.08);  color: #1d4ed8; border: 1px solid rgba(37,99,235,0.18); }
-.tag-curioso   { background: rgba(139,92,246,0.08); color: #6d28d9; border: 1px solid rgba(139,92,246,0.18); }
-.tag-urgente   { background: rgba(20,184,166,0.08); color: #0f766e; border: 1px solid rgba(20,184,166,0.18); }
-.tag-precio    { background: rgba(234,179,8,0.08);  color: #a16207; border: 1px solid rgba(234,179,8,0.18); }
-.tag-empty     { background: rgba(0,0,0,0.03); color: #aaa; border: 1px solid #e5e5e4; font-weight: 500; }
+.tag-ansioso   { background: rgba(251,146,60,0.10); color: #c2410c; border: 0.5px solid rgba(251,146,60,0.22); }
+.tag-esceptico { background: rgba(239,68,68,0.08);  color: #b91c1c; border: 0.5px solid rgba(239,68,68,0.20); }
+.tag-directo   { background: var(--omme-card-alt);  color: var(--omme-ink); border: 0.5px solid var(--omme-border); }
+.tag-curioso   { background: rgba(139,92,246,0.08); color: #6d28d9; border: 0.5px solid rgba(139,92,246,0.20); }
+.tag-urgente   { background: rgba(20,184,166,0.08); color: #0f766e; border: 0.5px solid rgba(20,184,166,0.20); }
+.tag-precio    { background: rgba(234,179,8,0.08);  color: #a16207; border: 0.5px solid rgba(234,179,8,0.20); }
+.tag-empty     { background: var(--omme-card-alt); color: var(--omme-muted); border: 0.5px solid var(--omme-border); font-weight: 400; }
 
-/* ─── Flags (dark mode) ────────────────────────────────────────────────────── */
-.flags-list { display: flex; flex-direction: column; gap: 5px; }
+/* ─── Flags ────────────────────────────────────────────────────────────────── */
+.flags-list { display: flex; flex-direction: column; gap: 6px; }
 .flag-item {
-  font-size: 11px; font-weight: 500; padding: 6px 10px;
-  border-radius: 4px; display: flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 500; padding: 7px 11px;
+  border-radius: 8px; display: flex; align-items: center; gap: 7px;
 }
 .flag-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.flag-competitors { background: rgba(249,115,22,0.06); color: #c2410c; border: 1px solid rgba(249,115,22,0.15); }
+.flag-competitors { background: rgba(249,115,22,0.06); color: #c2410c; border: 0.5px solid rgba(249,115,22,0.18); }
 .flag-competitors .flag-dot { background: #f97316; }
-.flag-treatments { background: rgba(139,92,246,0.06); color: #6d28d9; border: 1px solid rgba(139,92,246,0.15); }
+.flag-treatments { background: rgba(139,92,246,0.06); color: #6d28d9; border: 0.5px solid rgba(139,92,246,0.18); }
 .flag-treatments .flag-dot { background: #8b5cf6; }
 
 /* ─── Chat Area ────────────────────────────────────────────────────────────── */
 .chat-area {
   display: flex;
   flex-direction: column;
-  background: #fafafa;
+  background: var(--omme-cream);
   overflow: hidden;
 }
 .messages-container {
@@ -148,137 +219,131 @@ html, body {
 }
 .bubble-agent {
   align-self: flex-start; max-width: 72%;
-  background: #fff;
-  border: 1px solid #e5e5e4;
-  border-radius: 10px; border-top-left-radius: 2px;
+  background: var(--omme-card);
+  border: 0.5px solid var(--omme-border);
+  border-radius: 12px;
   padding: 10px 14px;
-  font-size: 13px; line-height: 1.6; color: #374151;
+  font-size: 13px; line-height: 1.6; color: var(--omme-ink);
 }
 .bubble-user {
   align-self: flex-end; max-width: 60%;
-  background: #f0f4ff;
-  border: 1px solid #dde5f9;
-  border-radius: 10px; border-top-right-radius: 2px;
+  background: var(--omme-ink);
+  color: #fff;
+  border-radius: 12px;
   padding: 10px 14px;
-  font-size: 13px; line-height: 1.6; color: #1e3a5f;
+  font-size: 13px; line-height: 1.6;
 }
 .typing-indicator {
   align-self: flex-start;
-  background: #fff;
-  border: 1px solid #e5e5e4;
-  border-radius: 10px; border-top-left-radius: 2px;
+  background: var(--omme-card);
+  border: 0.5px solid var(--omme-border);
+  border-radius: 12px;
   padding: 11px 14px;
   display: flex; gap: 4px; align-items: center;
 }
 .typing-dot {
   width: 5px; height: 5px; border-radius: 50%;
-  background: #ccc;
+  background: var(--omme-muted);
   animation: bop 1.4s ease-in-out infinite;
 }
 .typing-dot:nth-child(2) { animation-delay: .22s; }
 .typing-dot:nth-child(3) { animation-delay: .44s; }
 .error-bubble {
   align-self: flex-start; max-width: 72%;
-  background: rgba(220,38,38,0.08);
-  border: 1px solid rgba(220,38,38,0.2);
-  border-radius: 10px; border-top-left-radius: 2px;
+  background: rgba(139,0,0,0.06);
+  border: 0.5px solid rgba(139,0,0,0.18);
+  border-radius: 12px;
   padding: 10px 14px;
-  font-size: 12px; color: #dc2626; line-height: 1.5;
+  font-size: 12px; color: var(--omme-critical); line-height: 1.5;
 }
 .human-takeover-banner {
   display: none;
-  padding: 9px 12px;
-  background: rgba(96,165,250,0.06);
-  border: 1px solid rgba(96,165,250,0.14);
-  border-radius: 6px;
-  font-size: 11.5px; color: #1d4ed8;
+  padding: 10px 14px;
+  background: var(--omme-card-alt);
+  border: 0.5px solid var(--omme-border);
+  border-radius: 12px;
+  font-size: 11.5px; color: var(--omme-muted);
   text-align: center; line-height: 1.4;
 }
 
 .input-bar {
   display: flex; align-items: center; gap: 10px;
   padding: 14px 24px;
-  background: #fff;
-  border-top: 1px solid #e5e5e4;
+  background: var(--omme-cream);
+  border-top: 0.5px solid var(--omme-border);
 }
 .message-input {
   flex: 1;
-  background: #f5f5f4;
-  border: 1px solid #e0e0de;
-  border-radius: 6px;
-  padding: 9px 14px;
-  font-size: 12px;
-  color: #1a1a1a;
+  background: var(--omme-card);
+  border: 0.5px solid var(--omme-border);
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 13px;
+  color: var(--omme-ink);
   outline: none;
   font-family: inherit;
+  transition: border-color 0.15s;
 }
-.message-input::placeholder { color: #aaa; }
-.message-input:disabled { opacity: 0.3; cursor: not-allowed; }
+.message-input:focus { border-color: var(--omme-ink); }
+.message-input::placeholder { color: var(--omme-muted); }
+.message-input:disabled { opacity: 0.4; cursor: not-allowed; }
 .send-button {
-  width: 32px; height: 32px;
-  border-radius: 6px;
-  background: #185FA5;
+  width: 36px; height: 36px;
+  border-radius: 999px;
+  background: var(--omme-ink);
   border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: background 0.15s;
   flex-shrink: 0;
 }
-.send-button:hover { background: #1d6fbf; }
-.send-button:disabled { opacity: 0.2; cursor: not-allowed; }
-
-/* ─── Right Panel ──────────────────────────────────────────────────────────── */
-.right-panel {
-  background: #fff;
-  border-left: 1px solid #e5e5e4;
-  overflow-y: auto;
-  padding: 16px 0;
-}
+.send-button:hover { background: #333; }
+.send-button:disabled { opacity: 0.3; cursor: not-allowed; }
 
 #ohs-feed div {
   display: flex;
   justify-content: space-between;
   font-size: 10px;
-  padding: 3px 0;
-  border-bottom: 1px solid #f0f0ee;
-  color: #888;
+  padding: 4px 0;
+  border-bottom: 0.5px solid var(--omme-border);
+  color: var(--omme-muted);
 }
 
 /* ─── Month Simulator ──────────────────────────────────────────────────────── */
 .month-grid {
   display: flex;
-  gap: 3px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 .month-btn {
   width: 28px; height: 28px;
-  border: 1px solid #D8DAD6;
+  border: 0.5px solid var(--omme-border);
   border-radius: 6px;
-  background: #F5F4F0;
-  color: #0D0D0D;
+  background: var(--omme-card-alt);
+  color: var(--omme-ink);
   font-size: 11px;
   font-family: inherit;
-  font-weight: 400;
+  font-weight: 500;
   cursor: pointer;
   padding: 0;
-  transition: transform 0.08s ease;
+  transition: transform 0.08s ease, background 0.15s;
 }
 .month-btn:hover { transform: translateY(-1px); }
-.month-btn.consult { background: #C8F135; }
-.month-btn.churn   { background: #FFE4B5; }
+.month-btn.consult { background: var(--omme-lime); color: var(--omme-lime-text); border-color: rgba(200,241,53,0.6); }
+.month-btn.churn   { background: var(--omme-amber); color: var(--omme-amber-text); border-color: rgba(255,228,181,0.8); }
 .month-btn.active {
-  background: #0D0D0D;
+  background: var(--omme-ink);
   color: #fff;
-  border: 2px solid #0D0D0D;
+  border-color: var(--omme-ink);
   font-weight: 600;
 }
 .month-label {
-  margin-top: 8px;
+  margin-top: 10px;
   font-size: 11px;
-  color: #6B6B6B;
+  color: var(--omme-muted);
   line-height: 1.4;
 }
-.month-label strong { color: #0D0D0D; font-weight: 600; }
-.month-label .agent-hint { font-size: 10px; opacity: 0.6; }
+.month-label strong { color: var(--omme-ink); font-weight: 600; }
+.month-label .agent-hint { font-size: 10px; opacity: 0.75; }
 
 /* ─── System Note (pill) ──────────────────────────────────────────────────── */
 .bubble-system-note {
@@ -294,6 +359,56 @@ html, body {
   max-width: 80%;
   line-height: 1.4;
 }
+
+/* ─── OHS Score ────────────────────────────────────────────────────────────── */
+.ohs-wrap { text-align: center; padding: 8px 0 14px; }
+.ohs-score {
+  font-size: 48px;
+  font-weight: 500;
+  color: var(--omme-ink);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.ohs-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--omme-muted);
+  margin-top: 8px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.ohs-track {
+  background: var(--omme-card-alt);
+  border-radius: 999px;
+  height: 3px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.ohs-bar {
+  height: 100%;
+  width: 50%;
+  background: var(--omme-ink);
+  border-radius: 999px;
+  transition: width 0.5s ease, background 0.5s ease;
+}
+
+/* ─── Intake Progress ──────────────────────────────────────────────────────── */
+.intake-track {
+  background: var(--omme-card-alt);
+  border-radius: 999px;
+  height: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.intake-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--omme-ink);
+  transition: width 0.4s;
+  border-radius: 999px;
+}
+.intake-label { font-size: 10px; color: var(--omme-muted); }
 </style>
 </head>
 <body>
@@ -307,16 +422,16 @@ html, body {
         <div class="sphere-layer2"></div>
         <div class="sphere-layer3"></div>
       </div>
-      <span style="font-size:11px;font-weight:600;letter-spacing:0.15em;color:#1a1a1a;">OMME</span>
-      <span style="font-size:10px;color:#aaa;margin-left:8px;">/ agent-testing-v1</span>
+      <span class="brand-mark">OMME</span>
+      <span class="brand-sub">/ agent-testing-v1</span>
     </div>
     <div class="top-bar-center">
-      <span id="agent-badge" style="font-size:10px;font-weight:600;letter-spacing:0.08em;color:#60a5fa;background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.15);padding:2px 10px;border-radius:3px;text-transform:uppercase;">Advisor</span>
+      <span id="agent-badge" class="agent-badge">Advisor</span>
     </div>
     <div class="top-bar-right">
       <div class="live-dot"></div>
-      <span style="font-size:10px;color:#aaa;">Session activa</span>
-      <button onclick="clearSession()" style="font-size:10px;color:#666;background:none;border:1px solid #ddd;padding:3px 10px;border-radius:3px;cursor:pointer;margin-left:12px;">Nueva sesión</button>
+      <span class="session-label">Session activa</span>
+      <button onclick="clearSession()" class="session-btn">Nueva sesión</button>
     </div>
   </div>
 
@@ -340,16 +455,16 @@ html, body {
     <div class="panel-block">
       <div class="panel-label">FLAGS</div>
       <div class="flags-list" id="flags-list">
-        <span style="font-size:10px;color:#bbb;font-style:italic;">No active flags</span>
+        <span style="font-size:10px;color:var(--omme-muted);font-style:italic;">No active flags</span>
       </div>
     </div>
 
     <div class="panel-block">
       <div class="panel-label">INTAKE PROGRESS</div>
-      <div style="background:#f0f0ee;border-radius:3px;height:3px;overflow:hidden;margin-bottom:6px;">
-        <div id="intake-bar" style="height:100%;width:0%;background:#185FA5;transition:width 0.4s;border-radius:3px;"></div>
+      <div class="intake-track">
+        <div id="intake-bar" class="intake-bar"></div>
       </div>
-      <div id="intake-label" data-progress="0" style="font-size:10px;color:#aaa;">Not started</div>
+      <div id="intake-label" class="intake-label" data-progress="0">Not started</div>
     </div>
 
     <div class="panel-block" id="month-simulator-block" style="display:none;">
@@ -388,22 +503,22 @@ html, body {
   <div class="right-panel">
     <div class="panel-block">
       <div class="panel-label">OMME HEALTH SCORE</div>
-      <div style="text-align:center;padding:16px 0 12px;">
-        <div id="ohs-score" style="font-size:56px;font-weight:700;color:#1a1a1a;line-height:1;font-variant-numeric:tabular-nums;">50</div>
-        <div id="ohs-label" style="font-size:9px;letter-spacing:0.12em;color:#aaa;margin-top:6px;text-transform:uppercase;">STABLE</div>
+      <div class="ohs-wrap">
+        <div id="ohs-score" class="ohs-score">50</div>
+        <div id="ohs-label" class="ohs-label">STABLE</div>
       </div>
-      <div style="background:#f0f0ee;border-radius:3px;height:3px;overflow:hidden;margin-bottom:14px;">
-        <div id="ohs-bar" style="height:100%;width:50%;background:#185FA5;border-radius:3px;transition:width 0.5s ease,background 0.5s ease;"></div>
+      <div class="ohs-track">
+        <div id="ohs-bar" class="ohs-bar"></div>
       </div>
       <div id="ohs-feed" style="display:flex;flex-direction:column;gap:3px;max-height:160px;overflow-y:auto;">
-        <div style="font-size:10px;color:#ccc;font-style:italic;">No events</div>
+        <div style="font-size:10px;color:var(--omme-muted);font-style:italic;">No events</div>
       </div>
     </div>
 
     <div class="panel-block">
       <div class="panel-label">AGENT LOG</div>
       <div id="agent-log" style="display:flex;flex-direction:column;gap:4px;max-height:260px;overflow-y:auto;font-size:10px;font-family:inherit;">
-        <span style="color:#ccc;font-style:italic;">Waiting for events...</span>
+        <span style="color:var(--omme-muted);font-style:italic;">Waiting for events...</span>
       </div>
     </div>
   </div>
@@ -592,7 +707,7 @@ function renderMessageContent(text) {
     if (bulletBuffer.length === 0) return;
     html += '<ul style="margin:6px 0;padding-left:18px;list-style-type:disc;">';
     bulletBuffer.forEach(b => {
-      html += `<li style="margin-bottom:4px;font-size:13px;line-height:1.6;color:#374151;">${escapeHtml(b)}</li>`;
+      html += `<li style="margin-bottom:4px;font-size:13px;line-height:1.6;color:var(--omme-ink);">${escapeHtml(b)}</li>`;
     });
     html += '</ul>';
     bulletBuffer = [];
@@ -609,9 +724,9 @@ function renderMessageContent(text) {
     } else {
       flushBullets();
       if (/^\d+[.)]\s/.test(trimmed) || /^[a-d]\)\s/.test(trimmed)) {
-        html += `<div style="padding:4px 0 4px 10px;border-left:2px solid rgba(37,99,235,0.2);margin:4px 0;font-size:12px;color:#555;line-height:1.5;">${escapeHtml(trimmed)}</div>`;
+        html += `<div style="padding:4px 0 4px 10px;border-left:2px solid var(--omme-lime);margin:4px 0;font-size:12.5px;color:var(--omme-ink);line-height:1.55;">${escapeHtml(trimmed)}</div>`;
       } else {
-        html += `<div style="margin-bottom:6px;font-size:13px;line-height:1.6;color:#374151;">${escapeHtml(trimmed)}</div>`;
+        html += `<div style="margin-bottom:6px;font-size:13px;line-height:1.6;color:var(--omme-ink);">${escapeHtml(trimmed)}</div>`;
       }
     }
   });
@@ -685,9 +800,9 @@ function updateIntakeProgress(newProgress, completed) {
 
   if (completed) {
     bar.style.width = '100%';
-    bar.style.background = '#22C55E';
+    bar.style.background = 'var(--omme-lime)';
     label.textContent = 'Complete';
-    label.style.color = '#22C55E';
+    label.style.color = 'var(--omme-lime-text)';
   } else if (progress > 0) {
     bar.style.width = Math.round((progress / 16) * 100) + '%';
     label.textContent = 'Q' + progress + ' of 16';
@@ -708,21 +823,21 @@ function updateOHS(delta, reason) {
   bar.style.width = ohsScore + '%';
 
   if (ohsScore >= 75) {
-    bar.style.background = '#22C55E';
+    bar.style.background = 'var(--omme-lime)';
     label.textContent = 'PROMOTER';
-    label.style.color = '#22C55E';
+    label.style.color = 'var(--omme-lime-text)';
   } else if (ohsScore >= 50) {
-    bar.style.background = '#185FA5';
+    bar.style.background = 'var(--omme-ink)';
     label.textContent = 'STABLE';
-    label.style.color = '#aaa';
+    label.style.color = 'var(--omme-stable)';
   } else if (ohsScore >= 30) {
-    bar.style.background = '#f97316';
+    bar.style.background = 'var(--omme-amber)';
     label.textContent = 'AT RISK';
-    label.style.color = '#f97316';
+    label.style.color = 'var(--omme-amber-text)';
   } else {
-    bar.style.background = '#dc2626';
+    bar.style.background = 'var(--omme-critical)';
     label.textContent = 'CRITICAL';
-    label.style.color = '#dc2626';
+    label.style.color = 'var(--omme-critical)';
   }
 
   const feed = document.getElementById('ohs-feed');
@@ -731,10 +846,10 @@ function updateOHS(delta, reason) {
   if (empty) empty.remove();
 
   const item = document.createElement('div');
-  item.style.cssText = 'display:flex;justify-content:space-between;align-items:center;font-size:10px;padding:3px 0;border-bottom:1px solid #f0f0ee;';
+  item.style.cssText = 'display:flex;justify-content:space-between;align-items:center;font-size:10px;padding:4px 0;border-bottom:0.5px solid var(--omme-border);';
   const sign = delta > 0 ? '+' : '';
-  const color = delta > 0 ? '#15803d' : '#dc2626';
-  item.innerHTML = `<span style="color:#888;flex:1;">${reason}</span><span style="font-weight:700;color:${color};margin-left:8px;">${sign}${delta}</span>`;
+  const color = delta > 0 ? 'var(--omme-stable)' : 'var(--omme-critical)';
+  item.innerHTML = `<span style="color:var(--omme-muted);flex:1;">${reason}</span><span style="font-weight:600;color:${color};margin-left:8px;">${sign}${delta}</span>`;
   feed.insertBefore(item, feed.firstChild);
 
   const items = feed.querySelectorAll('div[style*="border-bottom"]');
@@ -749,13 +864,13 @@ function addAgentLog(agent, event, value) {
   if (empty) empty.remove();
 
   const line = document.createElement('div');
-  line.style.cssText = 'display:flex;gap:8px;padding:3px 0;border-bottom:1px solid #f0f0ee;align-items:baseline;';
+  line.style.cssText = 'display:flex;gap:8px;padding:4px 0;border-bottom:0.5px solid var(--omme-border);align-items:baseline;';
   const time = new Date().toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
   line.innerHTML = `
-    <span style="color:#ccc;flex-shrink:0;">${time}</span>
-    <span style="color:#aaa;flex-shrink:0;">[${agent}]</span>
-    <span style="color:#666;">${event}</span>
-    ${value ? `<span style="color:#444;margin-left:auto;">${value}</span>` : ''}`;
+    <span style="color:var(--omme-muted);opacity:0.7;flex-shrink:0;">${time}</span>
+    <span style="color:var(--omme-muted);flex-shrink:0;">[${agent}]</span>
+    <span style="color:var(--omme-ink);">${event}</span>
+    ${value ? `<span style="color:var(--omme-ink);margin-left:auto;font-weight:500;">${value}</span>` : ''}`;
   log.insertBefore(line, log.firstChild);
   const lines = log.querySelectorAll('div');
   if (lines.length > 20) lines[lines.length - 1].remove();
@@ -792,7 +907,7 @@ function updateInsightPanel(data, userMessage) {
 
   if (data.humanTakeover) {
     const el = document.getElementById('status-takeover');
-    if (el) { el.textContent = 'Active'; el.style.color = '#dc2626'; }
+    if (el) { el.textContent = 'Active'; el.style.color = 'var(--omme-critical)'; }
   }
 
   if (data.detectedProfile && data.detectedProfile !== 'null') {
@@ -824,7 +939,7 @@ function updateInsightPanel(data, userMessage) {
     const planEl = document.getElementById('ctx-plan');
     if (planEl) {
       planEl.textContent = data.planSeleccionado === '6_meses' ? '6 months' : '12 months';
-      planEl.style.color = '#a78bfa';
+      planEl.style.color = 'var(--omme-lime-text)';
     }
   }
 
@@ -847,10 +962,10 @@ function showPhotoSimulationButton() {
   btn.id = 'photo-sim-btn';
   btn.style.cssText = 'align-self:flex-start;margin:4px 0;display:flex;flex-direction:column;gap:8px;max-width:72%;';
   btn.innerHTML = `
-    <div style="background:#fff;border:1px solid #e5e5e4;border-radius:10px;border-top-left-radius:2px;padding:12px 14px;font-size:12px;color:#555;line-height:1.5;">
+    <div style="background:var(--omme-card);border:0.5px solid var(--omme-border);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--omme-ink);line-height:1.5;">
       📎 6 photos required to complete evaluation
     </div>
-    <button onclick="simulatePhotoUpload()" style="background:#f5f5f4;color:#555;border:1px solid #e0e0de;border-radius:6px;padding:8px 14px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:background 0.15s;">
+    <button onclick="simulatePhotoUpload()" style="background:var(--omme-card-alt);color:var(--omme-ink);border:0.5px solid var(--omme-border);border-radius:999px;padding:8px 16px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;transition:background 0.15s;">
       Simulate photo upload →
     </button>`;
   messagesEl.appendChild(btn);
@@ -881,10 +996,10 @@ function showPurchaseSimulationButton(plan) {
   btn.id = 'purchase-sim-btn';
   btn.style.cssText = 'align-self:flex-start;margin:4px 0;display:flex;flex-direction:column;gap:8px;max-width:72%;';
   btn.innerHTML = `
-    <div style="background:#fff;border:1px solid #e5e5e4;border-radius:10px;border-top-left-radius:2px;padding:12px 14px;font-size:12px;color:#555;line-height:1.5;">
+    <div style="background:var(--omme-card);border:0.5px solid var(--omme-border);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--omme-ink);line-height:1.5;">
       🛒 Plan selected: ${planLabel}
     </div>
-    <button onclick="simulatePurchase()" style="background:rgba(34,197,94,0.06);color:#15803d;border:1px solid rgba(34,197,94,0.2);border-radius:6px;padding:8px 14px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:background 0.15s;">
+    <button onclick="simulatePurchase()" style="background:var(--omme-lime);color:var(--omme-lime-text);border:0.5px solid rgba(200,241,53,0.6);border-radius:999px;padding:8px 16px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:background 0.15s;">
       Simulate purchase →
     </button>`;
   messagesEl.appendChild(btn);
@@ -962,7 +1077,7 @@ async function dispatchToAPI(text) {
 
     if (data.compraConfirmada) {
       const banner = document.createElement('div');
-      banner.style.cssText = 'align-self:center;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.15);border-radius:6px;padding:10px 16px;font-size:11px;color:#15803d;text-align:center;margin:8px 0;font-family:inherit;';
+      banner.style.cssText = 'align-self:center;background:rgba(200,241,53,0.14);border:0.5px solid rgba(200,241,53,0.35);border-radius:999px;padding:8px 18px;font-size:11px;color:var(--omme-lime-text);text-align:center;margin:8px 0;font-family:inherit;font-weight:500;';
       banner.textContent = '✓ Purchase completed — welcome to Omme';
       messagesEl.appendChild(banner);
       scrollToBottom();
